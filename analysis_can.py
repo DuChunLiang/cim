@@ -6,7 +6,7 @@ import zmq
 import time
 import cantools
 import can
-from protobuf import can_pb
+from protobuf import can_pb2
 
 
 # 日志打印信息
@@ -74,7 +74,7 @@ class Analysis:
         value = res[name]
 
         # protobuf交互协议
-        can_info = can_pb.CanInfo()
+        can_info = can_pb2.CanInfo()
         can_info.timestamp = bo.timestamp
         can_info.arbitration_id = str(bo.arbitration_id)
         can_info.sign_name = name

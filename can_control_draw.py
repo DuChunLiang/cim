@@ -6,7 +6,7 @@ import time
 import threading
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from protobuf import can_pb
+from protobuf import can_pb2
 
 
 # 日志打印信息
@@ -49,7 +49,7 @@ class ZmqSub:
         while True:
             msg = socket.recv()
 
-            can_info = can_pb.CanInfo()
+            can_info = can_pb2.CanInfo()
             can_info.ParseFromString(msg)
 
             # msg_list = str(msg).split('|')
