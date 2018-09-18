@@ -6,6 +6,7 @@ import time
 import threading
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from protobuf import can_pb
 
 
 # 日志打印信息
@@ -42,25 +43,31 @@ class ZmqSub:
         context = zmq.Context()
         socket = context.socket(zmq.SUB)
         print("Collecting updates from weather server...")
-        socket.connect("tcp://192.168.8.130:5000")
+        socket.connect("tcp://192.168.8.131:5000")
         socket.setsockopt(zmq.SUBSCRIBE, '')
 
         while True:
             msg = socket.recv()
-            msg_list = str(msg).split('|')
+
+            can_info = can_pb.CanInfo()
+            can_info.ParseFromString(msg)
+
+            # msg_list = str(msg).split('|')
             # 生成报文时的时间戳，ID, 名字, 值，消息发送频率（ms）
-            timestamp, id, name, value, \
-            cycle_time, minimum, maximum = msg_list[0], msg_list[1], msg_list[2], \
-                                           msg_list[3], msg_list[4], msg_list[5], msg_list[6]
+            timestamp, arbitration_id, name, value, \
+            cycle_time, minimum, maximum = can_info.timestamp, can_info.arbitration_id, \
+                                           can_info.sign_name, can_info.sign_value, \
+                                           can_info.cycle_time, can_info.minimum, can_info.maximum
 
             CPO.listen_time = time.time()
             CPO.y_temp_data = float(value)
 
             if float(cycle_time) > 0:
                 CPO.time_out = float(cycle_time)
-            CPO.minimum = minimum
-            CPO.maximum = maximum
-            CPO.is_recv = True
+            # CPO.minimum = minimum
+            # CPO.maximum = maximum
+            # CPO.is_recv = True
+            print can_info
 
 
 # 绘图
@@ -119,9 +126,9 @@ def main():
     t_zmq = threading.Thread(target=ZmqSub().start, name=thread_name)
     t_zmq.setDaemon(True)
 
-    thread_name = "threading-draw"
-    t_draw = threading.Thread(target=Drawing().start, name=thread_name)
-    t_draw.setDaemon(True)
+    # thread_name = "threading-draw"
+    # t_draw = threading.Thread(target=Drawing().start, name=thread_name)
+    # t_draw.setDaemon(True)
 
     t_zmq.start()
     logger('main-启动zmq接受数据线程 %s' % thread_name)
@@ -129,10 +136,11 @@ def main():
     # while not CPO.is_recv:
     #     time.sleep(1)
 
-    t_draw.start()
-    logger('main-启动绘图线程 %s' % thread_name)
-
-    t_draw.join()
+    # t_draw.start()
+    # logger('main-启动绘图线程 %s' % thread_name)
+    #
+    # t_draw.join()
+    t_zmq.join()
 
 
 main()

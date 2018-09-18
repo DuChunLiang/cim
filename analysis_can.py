@@ -4,9 +4,9 @@
 import sys
 import zmq
 import time
-# import threading
 import cantools
 import can
+from protobuf import can_pb
 
 
 # 日志打印信息
@@ -61,7 +61,7 @@ class Analysis:
                     if res is not None:
                         send_msg = self._get_send_msg(db.get_message_by_frame_id(frame_id), bo, res, 'EngSpd')
                         print(send_msg)
-                        socket.send(send_msg.encode())
+                        socket.send(send_msg)
             # else:
             #     print('-------%s在dbc文件中不存在-------' % frame_id)\
 
@@ -72,9 +72,19 @@ class Analysis:
         minimum = dbc_sg.minimum
         maximum = dbc_sg.maximum
         value = res[name]
-        send_msg = '%s | %s | %s | %s | %s | %s | %s' \
-                   % (bo.timestamp, bo.arbitration_id, name, value, cycle_time, minimum, maximum)
-        return send_msg
+
+        # protobuf交互协议
+        can_info = can_pb.CanInfo()
+        can_info.timestamp = bo.timestamp
+        can_info.arbitration_id = str(bo.arbitration_id)
+        can_info.sign_name = name
+        can_info.sign_value = value
+        can_info.cycle_time = cycle_time
+        can_info.minimum = minimum
+        can_info.maximum = maximum
+        # send_msg = '%s | %s | %s | %s | %s | %s | %s' \
+        #            % (bo.timestamp, bo.arbitration_id, name, value, cycle_time, minimum, maximum)
+        return can_info.SerializeToString()
 
 
 Analysis().analysis_can()
