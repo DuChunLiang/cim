@@ -1,0 +1,13 @@
+syntax = "proto2";
+
+package can;
+
+message CanInfo{
+    required float timestamp=1;
+    required string arbitration_id=2;
+    required string sign_name=3;
+    required float sign_value=4;
+    required int32 cycle_time=5;
+    required float minimum=6;
+    required float maximum=7;
+}
