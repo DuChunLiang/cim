@@ -2,11 +2,13 @@
 # -*- coding:utf-8 -*-
 
 import sys
-import zmq
+import myzmq
 import time
 import cantools
 import can
+import config
 from protobuf import can_pb2
+from myzmq import zmqutil
 
 
 # 日志打印信息
@@ -35,9 +37,9 @@ class Analysis:
     # 解析can消息
     def analysis_can(self):
         logger("已启动can数据解析")
-        context = zmq.Context()
-        socket = context.socket(zmq.PUB)
-        socket.bind("tcp://192.168.8.130:5000")
+        cf = config.Config()
+        zu = zmqutil.ZmqUtil()
+        zu.init_pub(id=cf.zmq_ip, port=cf.zmq_port)
 
         # 加载dbc文件
         db = cantools.database.load_file('dbc/db.dbc')
@@ -60,8 +62,8 @@ class Analysis:
                     res = db.decode_message(frame_id, data)
                     if res is not None:
                         send_msg = self._get_send_msg(db.get_message_by_frame_id(frame_id), bo, res, 'EngSpd')
-                        print(send_msg)
-                        socket.send(send_msg)
+                        # print(send_msg)
+                        zu.send(send_msg)
             # else:
             #     print('-------%s在dbc文件中不存在-------' % frame_id)\
 
@@ -82,12 +84,11 @@ class Analysis:
         can_info.cycle_time = cycle_time
         can_info.minimum = minimum
         can_info.maximum = maximum
-        # send_msg = '%s | %s | %s | %s | %s | %s | %s' \
-        #            % (bo.timestamp, bo.arbitration_id, name, value, cycle_time, minimum, maximum)
         return can_info.SerializeToString()
 
 
-Analysis().analysis_can()
+if __name__ == "__main__":
+    Analysis().analysis_can()
 
 
 

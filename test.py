@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 
 from protobuf import can_pb2
+from config import Config
 # import cantools
 # import can
 #
@@ -28,5 +29,7 @@ can_info.maximum = -500
 
 ci = can_pb2.CanInfo()
 ci.CopyFrom(can_info)
-print ci.SerializeToString()
-
+# print ci.SerializeToString()
+# c = config.Config()
+c = Config()
+print c.zmq_ip
