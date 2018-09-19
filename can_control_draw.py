@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 
 import time
+import threading
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from protobuf import can_pb2
@@ -17,28 +18,59 @@ def logger(content):
 
 class CPO:
     x_temp_data, y_temp_data = 0., 0.  # x, y轴临时数据
-    x_max_len = 1000      # x轴屏显长度
-    listen_time = time.time()   # 监听接收消息时间
-    time_out = 10000  # 超时时间 ms
-    minimum = 0     # 最小值
-    maximum = 500  # 最大值
-    is_recv = False   # 是否已经接收过数据
-    test = time.time()
+    x_max_len = 1000  # x轴屏显长度
+    time_out = 0  # 超时时间 ms
+    minimum = 0  # 最小值
+    maximum = 5000  # 最大值
+    is_recv = False  # 是否已经接收过数据
+    y_value = maximum/2
+    listen_time = time.time()  # 监听接收消息时间
 
     def __init__(self):
-        self.a = ''
+        self.t = None
 
     # 获取zmq接收消息时间间隔
     def get_interval_time(self):
         return int((time.time() - self.listen_time) * 1000)
 
 
+# zmq接受消息
+class ZmqSub:
+
+    def __init__(self):
+        _cf = config.Config()
+        self.zu = zmqutil.ZmqUtil()
+        self.zu.init_sub(ip=_cf.zmq_ip, port=_cf.zmq_port)
+
+    def start(self):
+        # p_count = 0
+        while True:
+            res_msg = self.zu.recv()
+            if res_msg:
+                can_info = can_pb2.CanInfo()
+                can_info.ParseFromString(res_msg)
+
+                # 生成报文时的时间戳，ID, 名字, 值，消息发送频率（ms）
+                timestamp, arbitration_id, name, value, \
+                cycle_time, minimum, maximum = can_info.timestamp, can_info.arbitration_id, \
+                                               can_info.sign_name, can_info.sign_value, \
+                                               can_info.cycle_time, can_info.minimum, can_info.maximum
+
+                CPO.listen_time = time.time()
+                if float(cycle_time) > 0:
+                    CPO.time_out = float(cycle_time)
+
+                CPO.y_value = value
+                # p_count += 1
+                # print p_count
+            # else:
+            #     CPO.y_value = 1
+
+
 # 绘图
 class Drawing:
     def __init__(self):
-        cf = config.Config()
-        self.zu = zmqutil.ZmqUtil()
-        self.zu.init_sub(ip=cf.zmq_ip, port=cf.zmq_port)
+        self.y_value = 1
 
     def start(self):
         fig, ax = plt.subplots()
@@ -48,16 +80,16 @@ class Drawing:
             ax.set_xlim(0, CPO.x_max_len)
             # print(CPO.minimum, '---', CPO.maximum)
             ax.set_ylim(CPO.minimum, CPO.maximum)
-            scat = ax.scatter(x_data, y_data, c=c_data, s=0.01)
+            scat = ax.scatter(x_data, y_data, c=c_data, s=1)
             return scat,
 
         def update(frame):
+            CPO.test_time = time.time()
             if len(x_data) <= CPO.x_max_len:
                 x_data.append(frame)
                 # CPO.x_temp_data += int((time.time() - CPO.test_time) * 1000)
-                # CPO.test_time = time.time()
 
-            y_data.append(self.read_y_info())
+            y_data.append(CPO.y_value)
             if len(y_data) > CPO.x_max_len+1:
                 y_data.pop(0)
 
@@ -70,10 +102,7 @@ class Drawing:
             if len(c_data) > CPO.x_max_len+1:
                 c_data.pop(0)
 
-            scat = ax.scatter(x_data, y_data, c=c_data, s=0.01)
-
-            # print('---', int((time.time() - CPO.test_time) * 1000))
-
+            scat = ax.scatter(x_data, y_data, c=c_data, s=1)
             return scat,
 
         ani = animation.FuncAnimation(fig=fig, func=update, frames=range(0, CPO.x_max_len + 1),
@@ -83,32 +112,24 @@ class Drawing:
         plt.grid(True)
         plt.show()
 
-    def read_y_info(self):
-        res_msg = self.zu.recv()
-        # res_value = None
-        if res_msg:
-            can_info = can_pb2.CanInfo()
-            can_info.ParseFromString(res_msg)
-
-            # msg_list = str(msg).split('|')
-            # 生成报文时的时间戳，ID, 名字, 值，消息发送频率（ms）
-            timestamp, arbitration_id, name, value, \
-            cycle_time, minimum, maximum = can_info.timestamp, can_info.arbitration_id, \
-                                           can_info.sign_name, can_info.sign_value, \
-                                           can_info.cycle_time, can_info.minimum, can_info.maximum
-
-            CPO.listen_time = time.time()
-            if float(cycle_time) > 0:
-                CPO.time_out = float(cycle_time)
-            res_value = value
-        else:
-            res_value = 1
-        return res_value
-
 
 def main():
-    draw = Drawing()
-    draw.start()
+    thread_name = "threading-zmq"
+    t_zmq = threading.Thread(target=ZmqSub().start, name=thread_name)
+    t_zmq.setDaemon(True)
+
+    thread_name = "threading-draw"
+    t_draw = threading.Thread(target=Drawing().start, name=thread_name)
+    t_draw.setDaemon(True)
+
+    t_zmq.start()
+    logger('main-启动zmq接受数据线程 %s' % thread_name)
+    time.sleep(1)
+
+    t_draw.start()
+    logger('main-启动绘图线程 %s' % thread_name)
+
+    t_draw.join()
 
 
 if __name__ == "__main__":

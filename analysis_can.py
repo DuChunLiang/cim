@@ -19,6 +19,7 @@ def logger(content):
 
 class CPO:
     dbc_id_list = []       # dbc信息存储 用于判断id是否存在
+    p_count = 0
 
     def __init__(self):
         print ('')
@@ -39,7 +40,7 @@ class Analysis:
         logger("已启动can数据解析")
         cf = config.Config()
         zu = zmqutil.ZmqUtil()
-        zu.init_pub(id=cf.zmq_ip, port=cf.zmq_port)
+        zu.init_pub(ip=cf.zmq_ip, port=cf.zmq_port)
 
         # 加载dbc文件
         db = cantools.database.load_file('dbc/db.dbc')
@@ -51,6 +52,7 @@ class Analysis:
         can.rc['channel'] = sys.argv[1]
         can_bus = can.interface.Bus()
         while True:
+            CPO.test_time = time.time()
             bo = can_bus.recv()
 
             frame_id = bo.arbitration_id
@@ -64,6 +66,8 @@ class Analysis:
                         send_msg = self._get_send_msg(db.get_message_by_frame_id(frame_id), bo, res, 'EngSpd')
                         # print(send_msg)
                         zu.send(send_msg)
+                        CPO.p_count += 1
+                        print(CPO.p_count)
             # else:
             #     print('-------%s在dbc文件中不存在-------' % frame_id)\
 
