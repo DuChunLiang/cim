@@ -2,7 +2,6 @@
 # -*- coding:utf-8 -*-
 
 import sys
-import myzmq
 import time
 import cantools
 import can
