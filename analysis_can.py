@@ -18,7 +18,6 @@ def logger(content):
 
 class CPO:
     dbc_id_list = []       # dbc信息存储 用于判断id是否存在
-    p_count = 0
 
     def __init__(self):
         print ('')
@@ -63,10 +62,7 @@ class Analysis:
                     res = db.decode_message(frame_id, data)
                     if res is not None:
                         send_msg = self._get_send_msg(db.get_message_by_frame_id(frame_id), bo, res, 'EngSpd')
-                        # print(send_msg)
                         zu.send(send_msg)
-                        CPO.p_count += 1
-                        print(CPO.p_count)
             # else:
             #     print('-------%s在dbc文件中不存在-------' % frame_id)\
 
@@ -87,6 +83,7 @@ class Analysis:
         can_info.cycle_time = cycle_time
         can_info.minimum = minimum
         can_info.maximum = maximum
+        print(value)
         return can_info.SerializeToString()
 
 
