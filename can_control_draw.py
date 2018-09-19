@@ -43,7 +43,6 @@ class ZmqSub:
         self.zu.init_sub(ip=_cf.zmq_ip, port=_cf.zmq_port)
 
     def start(self):
-        # p_count = 0
         while True:
             res_msg = self.zu.recv()
             if res_msg:
@@ -61,10 +60,6 @@ class ZmqSub:
                     CPO.time_out = float(cycle_time)
 
                 CPO.y_value = value
-                # p_count += 1
-                # print p_count
-            # else:
-            #     CPO.y_value = 1
 
 
 # 绘图
@@ -78,7 +73,6 @@ class Drawing:
 
         def init():
             ax.set_xlim(0, CPO.x_max_len)
-            # print(CPO.minimum, '---', CPO.maximum)
             ax.set_ylim(CPO.minimum, CPO.maximum)
             scat = ax.scatter(x_data, y_data, c=c_data, s=1)
             return scat,
@@ -87,7 +81,6 @@ class Drawing:
             CPO.test_time = time.time()
             if len(x_data) <= CPO.x_max_len:
                 x_data.append(frame)
-                # CPO.x_temp_data += int((time.time() - CPO.test_time) * 1000)
 
             y_data.append(CPO.y_value)
             if len(y_data) > CPO.x_max_len+1:
@@ -107,7 +100,7 @@ class Drawing:
 
         ani = animation.FuncAnimation(fig=fig, func=update, frames=range(0, CPO.x_max_len + 1),
                                       init_func=init, blit=True, interval=0)
-        plt.xlabel("s")
+        plt.xlabel("Hz")
         plt.ylabel("r/min")
         plt.grid(True)
         plt.show()
