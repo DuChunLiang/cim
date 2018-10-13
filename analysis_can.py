@@ -20,7 +20,7 @@ class CPO:
     dbc_id_list = []       # dbc信息存储 用于判断id是否存在
 
     def __init__(self):
-        print ('')
+        print('')
 
 
 class Analysis:
@@ -36,7 +36,7 @@ class Analysis:
     # 解析can消息
     def analysis_can(self):
         logger("已启动can数据解析")
-        cf = config.Config()
+        cf = config.Zmq()
         zu = zmqutil.ZmqUtil()
         zu.init_pub(ip=cf.zmq_ip, port=cf.zmq_port)
 

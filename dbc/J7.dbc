@@ -1,0 +1,99 @@
+VERSION ""
+
+
+BS_:
+
+BU_:
+
+
+BO_ 2566896423 MENU: 8 Vector__XXX
+ SG_ MenuRight : 26|2@1+ (1,0) [0|3] "" Vector__XXX
+ SG_ MenuLeft : 24|2@1+ (1,0) [0|3] "" Vector__XXX
+ SG_ MenuDown : 22|2@1+ (1,0) [0|3] "" Vector__XXX
+ SG_ MenuUP : 20|2@1+ (1,0) [0|3] "" Vector__XXX
+ SG_ MenuMode : 18|2@1+ (1,0) [0|3] "" Vector__XXX
+ SG_ MenuOK : 16|2@1+ (1,0) [0|3] "" Vector__XXX
+
+BO_ 2566844711 CCVS: 8 Vector__XXX
+ SG_ CCVS_SPEED : 8|16@1+ (0.003906,0) [0|255.98] "" Vector__XXX
+
+BO_ 2566841879 CMU4: 8 Vector__XXX
+ SG_ S_Year : 40|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ S_Month : 32|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ S_Hour : 24|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ S_Day : 16|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ S_Second : 8|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ S_Minute : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 2566840343 CMU3: 8 Vector__XXX
+ SG_ S_Xiaojilicheng : 0|32@1+ (0.1,0) [0|4.29497e+008] "" Vector__XXX
+ SG_ S_TotalMileage : 32|32@1+ (1,0) [0|4.29497e+009] "" Vector__XXX
+
+BO_ 2365484055 CMU2: 8 Vector__XXX
+ SG_ S_Speed : 48|16@1+ (0.003906,0) [0|255.98] "" Vector__XXX
+
+BO_ 2566848535 CMU1: 8 Vector__XXX
+ SG_ S_Key5 : 46|1@1- (1,0) [0|1] "" Vector__XXX
+ SG_ S_Key4 : 45|1@1- (1,0) [0|1] "" Vector__XXX
+ SG_ S_Key3 : 44|1@1- (1,0) [0|1] "" Vector__XXX
+ SG_ S_Key2 : 43|1@1- (1,0) [0|1] "" Vector__XXX
+ SG_ S_Key1 : 42|1@1- (1,0) [0|1] "" Vector__XXX
+ SG_ S_AuxiliaryBrake : 41|1@1- (1,0) [0|1] "" Vector__XXX
+ SG_ S_ASR : 40|1@1- (1,0) [0|1] "" Vector__XXX
+ SG_ S_ABS2 : 39|1@1- (1,0) [0|1] "" Vector__XXX
+ SG_ S_ABS1 : 38|1@1- (1,0) [0|1] "" Vector__XXX
+ SG_ S_Xiaodengzhishi : 37|1@1- (1,0) [0|1] "" Vector__XXX
+ SG_ S_VCU : 36|1@1- (1,0) [0|1] "" Vector__XXX
+ SG_ S_RolloverAlarm : 35|1@1- (1,0) [0|1] "" Vector__XXX
+ SG_ S_CoolantLevelAlarm : 34|1@1- (1,0) [0|1] "" Vector__XXX
+ SG_ S_ForceIndicator : 33|1@1- (1,0) [0|1] "" Vector__XXX
+ SG_ S_Charge : 32|1@1- (1,0) [0|1] "" Vector__XXX
+ SG_ S_BrakePressure2 : 24|8@1+ (8,0) [0|2040] "" Vector__XXX
+ SG_ S_BrakePressure1 : 16|8@1+ (8,0) [0|2040] "" Vector__XXX
+ SG_ S_Fuel : 8|8@1+ (0.4,0) [0|102] "" Vector__XXX
+ SG_ S_Voltage : 0|8@1+ (0.1,0) [0|25.5] "V" Vector__XXX
+
+BO_ 2566873091 ECU6: 8 Vector__XXX
+ SG_ S_AM : 20|2@1+ (1,0) [0|3] "" Vector__XXX
+
+BO_ 2565866755 ECU5: 8 Vector__XXX
+ SG_ S_RecommendedStall : 0|8@1+ (1,-125) [-125|130] "" Vector__XXX
+ SG_ S_CurrentStall : 24|8@1+ (1,-125) [-125|130] "" Vector__XXX
+
+BO_ 2566804992 ECU4: 8 Vector__XXX
+ SG_ S_UreaLevel : 0|8@1+ (0.4,0) [0|102] "" Vector__XXX
+
+BO_ 2566844160 ECU3: 8 Vector__XXX
+ SG_ S_OilPress : 24|8@1+ (4,0) [0|1020] "" Vector__XXX
+
+BO_ 2566843904 ECU2: 8 Vector__XXX
+ SG_ S_TempWater : 0|8@1+ (1,-40) [-40|215] "C" Vector__XXX
+
+BO_ 2364539904 ECU1: 8 Vector__XXX
+ SG_ S_EngineSpeed : 24|16@1+ (0.125,0) [0|8191.88] "rpm" Vector__XXX
+
+BO_ 2565865739 ECU7: 8 Vector__XXX
+ SG_ ABS1_Alarm : 44|2@1+ (1,0) [0|3] "" Vector__XXX
+ SG_ ASR_Indicator : 46|2@1+ (1,0) [0|3] "" Vector__XXX
+
+BO_ 2565865487 ECU9: 8 Vector__XXX
+ SG_ Aux_Brake : 8|8@1+ (1,-125) [-125|130] "" Vector__XXX
+
+BO_ 2432593706 ACC1: 8 Vector__XXX
+ SG_ TargetDetected : 48|2@1+ (1,0) [0|3] "" Vector__XXX
+ SG_ ACCDistance : 27|3@1+ (1,0) [0|7] "" Vector__XXX
+ SG_ ACCMode : 24|3@1+ (1,0) [0|7] "" Vector__XXX
+
+BO_ 2566834920 DM1_LDW: 8 Vector__XXX
+ SG_ AmberWarningLampStatus : 4|2@1+ (1,0) [0|3] "" Vector__XXX
+
+BO_ 2566901992 LDW_FCW1: 8 Vector__XXX
+ SG_ DSMWarningStatus : 19|3@1+ (1,0) [0|7] "" Vector__XXX
+ SG_ LDWStatus : 0|3@1+ (1,0) [0|7] "" Vector__XXX
+
+BO_ 2431649768 FLI1: 8 Vector__XXX
+ SG_ laneRedLeft : 0|2@1+ (1,0) [0|3] "" Vector__XXX
+
+
+
+

@@ -38,9 +38,9 @@ class CPO:
 class ZmqSub:
 
     def __init__(self):
-        _cf = config.Config()
-        self.zu = zmqutil.ZmqUtil()
-        self.zu.init_sub(ip=_cf.zmq_ip, port=_cf.zmq_port)
+        _cf = config.Zmq()
+        self.zu = zmqutil.ZmqUtil(ip=_cf.zmq_ip, port=_cf.zmq_port)
+        self.zu.init_sub()
 
     def start(self):
         while True:

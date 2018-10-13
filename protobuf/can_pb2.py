@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='can.proto',
   package='can',
   syntax='proto2',
-  serialized_pb=_b('\n\tcan.proto\x12\x03\x63\x61n\"\x91\x01\n\x07\x43\x61nInfo\x12\x11\n\ttimestamp\x18\x01 \x02(\x02\x12\x16\n\x0e\x61rbitration_id\x18\x02 \x02(\t\x12\x11\n\tsign_name\x18\x03 \x02(\t\x12\x12\n\nsign_value\x18\x04 \x02(\x02\x12\x12\n\ncycle_time\x18\x05 \x02(\x05\x12\x0f\n\x07minimum\x18\x06 \x02(\x02\x12\x0f\n\x07maximum\x18\x07 \x02(\x02')
+  serialized_pb=_b('\n\tcan.proto\x12\x03\x63\x61n\"\x91\x01\n\x07\x43\x61nInfo\x12\x11\n\ttimestamp\x18\x01 \x02(\x02\x12\x16\n\x0e\x61rbitration_id\x18\x02 \x02(\t\x12\x11\n\tsign_name\x18\x03 \x02(\t\x12\x12\n\nsign_value\x18\x04 \x02(\x02\x12\x12\n\ncycle_time\x18\x05 \x02(\x05\x12\x0f\n\x07minimum\x18\x06 \x02(\x02\x12\x0f\n\x07maximum\x18\x07 \x02(\x02\"=\n\x07UDSData\x12\x16\n\x0e\x61rbitration_id\x18\x01 \x02(\x05\x12\x0c\n\x04name\x18\x03 \x02(\t\x12\x0c\n\x04\x64\x61ta\x18\x02 \x02(\t')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -98,7 +98,53 @@ _CANINFO = _descriptor.Descriptor(
   serialized_end=164,
 )
 
+
+_UDSDATA = _descriptor.Descriptor(
+  name='UDSData',
+  full_name='can.UDSData',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='arbitration_id', full_name='can.UDSData.arbitration_id', index=0,
+      number=1, type=5, cpp_type=1, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='name', full_name='can.UDSData.name', index=1,
+      number=3, type=9, cpp_type=9, label=2,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='data', full_name='can.UDSData.data', index=2,
+      number=2, type=9, cpp_type=9, label=2,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto2',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=166,
+  serialized_end=227,
+)
+
 DESCRIPTOR.message_types_by_name['CanInfo'] = _CANINFO
+DESCRIPTOR.message_types_by_name['UDSData'] = _UDSDATA
 
 CanInfo = _reflection.GeneratedProtocolMessageType('CanInfo', (_message.Message,), dict(
   DESCRIPTOR = _CANINFO,
@@ -106,6 +152,13 @@ CanInfo = _reflection.GeneratedProtocolMessageType('CanInfo', (_message.Message,
   # @@protoc_insertion_point(class_scope:can.CanInfo)
   ))
 _sym_db.RegisterMessage(CanInfo)
+
+UDSData = _reflection.GeneratedProtocolMessageType('UDSData', (_message.Message,), dict(
+  DESCRIPTOR = _UDSDATA,
+  __module__ = 'can_pb2'
+  # @@protoc_insertion_point(class_scope:can.UDSData)
+  ))
+_sym_db.RegisterMessage(UDSData)
 
 
 # @@protoc_insertion_point(module_scope)

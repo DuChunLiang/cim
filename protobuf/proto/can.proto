@@ -11,3 +11,9 @@ message CanInfo{
     required float minimum=6;
     required float maximum=7;
 }
+
+message UDSData{
+    required int32 arbitration_id=1;
+    required string name=3;
+    required string data=2;
+}

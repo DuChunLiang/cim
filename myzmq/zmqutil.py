@@ -6,19 +6,22 @@ import zmq
 
 class ZmqUtil:
 
-    def __init__(self):
+    def __init__(self, ip="127.0.0.1", port=5001):
         self._context = zmq.Context()
         self._poller = zmq.Poller()
         self._socket = None
+        self.ip = ip
+        self.port = port
 
-    def init_pub(self, ip="127.0.0.1", port=5001):
+    def init_pub(self):
         self._socket = self._context.socket(zmq.PUB)
-        self._socket.bind("tcp://%s:%s" % (ip, port))
+        self._socket.bind("tcp://%s:%s" % (self.ip, self.port))
 
-    def init_sub(self, ip="127.0.0.1", port=5001):
+    def init_sub(self):
         self._socket = self._context.socket(zmq.SUB)
-        self._socket.connect("tcp://%s:%s" % (ip, port))
-        self._socket.setsockopt(zmq.SUBSCRIBE, '')
+        self._socket.connect("tcp://%s:%s" % (self.ip, self.port))
+        print(zmq.SUBSCRIBE)
+        self._socket.setsockopt(zmq.SUBSCRIBE, "")
         self._poller.register(self._socket, zmq.POLLIN)
 
     def send(self, msg):
