@@ -7,6 +7,7 @@ from pyb import Switch
 from pyb import CAN
 import ustruct
 import micropython
+import random
 
 micropython.alloc_emergency_exception_buf(100)
 
@@ -16,6 +17,8 @@ class Temp:
     on_off = 0
     acc_distance_val = 0
     lane_red_left = 0
+    up_or_down = 0
+    up_down_count = 0
 
     engSpeed = 10
     isRise = 1
@@ -51,12 +54,33 @@ class Test:
         self.can.send(can_data, can_id)
         pyb.udelay(800)
 
-    def on_off(self):
+    def key_on_off(self):
         if self._run:
-            p = Pin('X1', Pin.OUT_OD)
-            p.low()
+            switch_pin = Pin('X1', Pin.OUT_OD)
+            switch_pin.low()
             pyb.delay(500)
-            p.high()
+            switch_pin.high()
+
+    def key_down(self):
+        if self._run:
+            down_pin = Pin('Y6', Pin.OUT_OD)
+            down_pin.low()
+            pyb.delay(500)
+            down_pin.high()
+
+    def key_up(self):
+        if self._run:
+            up_pin = Pin('Y7', Pin.OUT_OD)
+            up_pin.low()
+            pyb.delay(500)
+            up_pin.high()
+
+    def key_enter(self):
+        if self._run:
+            enter_pin = Pin('Y8', Pin.OUT_OD)
+            enter_pin.low()
+            pyb.delay(500)
+            enter_pin.high()
 
     # ACCDistance
     def ontimer_test1_100(self):
@@ -101,10 +125,6 @@ class Test:
         if self._run:
             can_id = 0x18FEF127
             can_data = ustruct.pack('<B3HB', 0, int((Temp.engSpeed * 0.08)/0.003906), 0, 0, 0)
-            # if Temp.isRise:
-            #     Temp.speed += 1
-            # else:
-            #     Temp.speed -= 1
             self.send_can(can_id, can_data)
 
     # S_EngineSpeed
@@ -131,9 +151,24 @@ def main():
     while True:
         pyb.delay(1)
         Temp.count += 1
+        if Temp.count % random.randint(1000, 3000) == 0:
+            t.key_on_off()
+            if Temp.up_down_count > 3:
+                Temp.up_down_count = 0
+                if Temp.up_or_down:
+                    Temp.up_or_down = 0
+                else:
+                    Temp.up_or_down = 1
 
-        if Temp.count % 2000 == 0:
-            t.on_off()
+        if Temp.count % random.randint(1000, 3000) == 0:
+            Temp.up_down_count += 1
+            if Temp.up_or_down:
+                t.key_up()
+            else:
+                t.key_down()
+
+        if Temp.count % random.randint(1000, 3000) == 0:
+            t.key_enter()
 
         if Temp.count % 10 == 0:
             t.ontimer_10_1()
@@ -149,16 +184,3 @@ def main():
 
         if Temp.count % 5 == 0:
             t.ontimer_eec1_5()
-
-
-
-
-
-
-
-
-
-
-
-
-

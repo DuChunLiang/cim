@@ -25,3 +25,12 @@ class Convert:  # 转换
         hex_data = "".join('%s' % x for x in hex_list)
         return binascii.unhexlify(hex_data)
 
+    @staticmethod
+    def str_to_hex(s):
+        return ''.join([hex(ord(c)).replace('0x', '') for c in s]).upper()
+
+    @staticmethod
+    def getcrc32(filepath):
+        file = open(filepath, 'rb')
+        return binascii.crc32(file.read())
+

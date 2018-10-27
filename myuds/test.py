@@ -5,14 +5,14 @@ from udsoncan.connections import IsoTPConnection
 from udsoncan.client import Client
 # from udsoncan.exceptions import *
 from udsoncan.services import *
-import configs
+from . import uds_configs
 import sys
 
 
 def start():
     data = str(sys.argv[1]).encode(encoding="utf-8")
     conn = IsoTPConnection('can0', rxid=0x7e8, txid=0x7e0)
-    config = configs.default_client_config
+    config = uds_configs.default_client_config
     config['data_identifiers'][udsoncan.DataIdentifier.VIN] = '>%ss' % len(data)
 
     with Client(conn, request_timeout=2, config=config) as client:

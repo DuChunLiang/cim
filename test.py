@@ -1,9 +1,25 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import cantools
+# import cantools
 import struct
-import time
+# import time
+import random
+
+
+# from suds.client import Client
+# import testmoped
+#
+#
+# url = 'http://localhost:59990/moped/pws?wsdl'
+# client = Client(url)
+# client.options.cache.clear()
+# s = client.service
+#
+# testmoped.uploadplus(s, "UltraSonicReader", "1.0")
+# s.installApp("21UYA31581L000000", 506)
+
+# print(struct.pack("6s", "酒店客房".encode(encoding="utf-8")))
 
 # import cantools
 # import can
@@ -39,7 +55,7 @@ import time
 #         id_l.append(can_id)
 #         print('%s %s %s' % (d_a[0], d_a[1], d_a[2]))
 
-db = cantools.database.load_file('dbc/J7.dbc')
+# db = cantools.database.load_file('dbc/J7.dbc')
 # acc1 = db.get_message_by_name('ACC1')
 # data = acc1.encode({'ACCMode': 0, 'ACCDistance': 0, 'TargetDetected': 1})
 # print(acc1)
@@ -69,6 +85,22 @@ db = cantools.database.load_file('dbc/J7.dbc')
 # print(data)
 
 
-a = struct.pack('<HBB2H', 0, 0, 16, 0, 0)
-print(int(0.07*100))
+# a = struct.pack('<HBB2H', 0, 0, 16, 0, 0)
+# print(int(0.07*100))
+#
+# for i in range(10):
+#     print(random.randint(1000, 3000))
 
+
+
+from common import cim_utils
+# a = binascii.crc32("123456".encode())
+# v = "%i%i%i" % (int())bytes(0x313238).decode("ascii")
+
+# v = binascii.a2b_hex('8000aabb'.encode())
+
+# print(bytes(hex(int(0x8000aabb & 0xffffffff)).encode()))
+# print(hex(binascii.crc32(b'\x80\x00\xaa\xbb') & 0xffffffff))
+
+a = cim_utils.Convert.str_to_hex("hello")
+print(a)
