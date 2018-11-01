@@ -69,7 +69,7 @@ class Srec:
             address_length_bits = 32
 
         out_file.write("S00F000068656C6C6F202020202000003C\r\n".encode())
-        out_file.write(f.as_srec(number_of_data_bytes=16, address_length_bits=address_length_bits).encode())
+        out_file.write(f.as_srec(number_of_data_bytes=24, address_length_bits=address_length_bits).encode())
         out_file.close()
         bin_file.close()
         print("generate srec success -> '%s'" % out_path)
@@ -120,6 +120,6 @@ class Srec:
 
 
 s = Srec()
-s.generate_srec(type=3, bin_start=0x0, read_length=1024 * 130, address_start=0x5000)
+s.generate_srec(type=3, bin_start=0x0, read_length=1024 * 10, address_start=0x80000)
 
 # print(s.create_random_data(15))

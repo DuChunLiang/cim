@@ -93,7 +93,6 @@ import random
 
 
 
-from common import cim_utils
 # a = binascii.crc32("123456".encode())
 # v = "%i%i%i" % (int())bytes(0x313238).decode("ascii")
 
@@ -101,6 +100,12 @@ from common import cim_utils
 
 # print(bytes(hex(int(0x8000aabb & 0xffffffff)).encode()))
 # print(hex(binascii.crc32(b'\x80\x00\xaa\xbb') & 0xffffffff))
-
-a = cim_utils.Convert.str_to_hex("hello")
-print(a)
+# import binascii
+# a = 879
+# c = "%04X" % a
+# print(c)
+# d = bytearray.fromhex(c)
+# d[1] = d[1] & 0xF0
+# print(d)
+# print(int(binascii.b2a_hex(d), 16))
+print(1!=1)
