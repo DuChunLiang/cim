@@ -28,12 +28,8 @@ class Analysis:
     def __init__(self):
         pass
 
-    def log(self, content, frame_id):
-        # if len(sys.argv) >= 3:
-        #     if int(sys.argv[2], 16) == frame_id:
-        #         print(content)
-        # else:
-        print(content)
+    def log(self, content, timestamp):
+        print(round(timestamp, 3), content)
 
     # 判断id在dbc文件中是否存在
     def id_is_exist(self, _id):
@@ -100,8 +96,7 @@ class Analysis:
                             ton = int("%02X%02X%02X" % (ton_toff_2, ton_toff_1, ton_toff_0), 16)
                             toff = int("%02X%02X%02X" % (ton_toff_5, ton_toff_4, ton_toff_3), 16)
 
-                        self.log("%s ton=%s, toff=%s" % (hex(bo.arbitration_id), str(ton), str(toff)),
-                                 bo.arbitration_id)
+                        self.log("%s ton=%s, toff=%s" % (hex(bo.arbitration_id), str(ton), str(toff)), bo.timestamp)
                 elif frame_id == 0x300:
                     res = db.decode_message(frame_id, data)
                     if res is not None:
@@ -136,7 +131,7 @@ class Analysis:
                                                                                   ledi_ch_voltage_2)
 
                             # temp_log_file.write("%03X %s" % (hex(bo.arbitration_id), CPO.complete_package))
-                            self.log("0x%03X %s" % (bo.arbitration_id, CPO.complete_package_300), bo.arbitration_id)
+                            self.log("0x%03X %s" % (bo.arbitration_id, CPO.complete_package_300), bo.timestamp)
 
                 elif frame_id == 0x380:
                     res = db.decode_message(frame_id, data)
@@ -162,7 +157,7 @@ class Analysis:
                                                                                    out_ch_id_2, out_ch_value_2,
                                                                                    out_ch_id_3, out_ch_value_3)
 
-                            self.log("0x%03X %s" % (bo.arbitration_id, CPO.complete_package_380), bo.arbitration_id)
+                            self.log("0x%03X %s" % (bo.arbitration_id, CPO.complete_package_380), bo.timestamp)
 
                 elif frame_id == 0x100:
                     res = db.decode_message(frame_id, data)
@@ -170,24 +165,24 @@ class Analysis:
                         ana1 = int(res['ana1'])
                         ana2 = int(res['ana2'])
 
-                        self.log("0x%03X ana1=%s, ana2=%s" % (bo.arbitration_id, ana1, ana2), bo.arbitration_id)
+                        self.log("0x%03X ana1=%s, ana2=%s" % (bo.arbitration_id, ana1, ana2), bo.timestamp)
 
                 elif frame_id == 0x400:
                     res = db.decode_message(frame_id, data)
                     if res is not None:
                         sens1_inf = int(res['sens1_inf'])
                         sens2_inf = int(res['sens2_inf'])
-                        wiper_Fail = int(res['wiper_Fail'])
+                        wiper_Fail = int(res['wiper_fail'])
                         oilavl = int(res['oilavl'])
-                        Vbat_inf = int(res['Vbat_inf'])
-                        V1_inf = int(res['V1_inf'])
-                        V2_inf = int(res['V2_inf'])
+                        Vbat_inf = int(res['vbat_inf'])
+                        V1_inf = int(res['v1_inf'])
+                        V2_inf = int(res['v2_inf'])
 
                         self.log("0x%03X sens1_inf=%s, sens1_inf=%s, "
                                  "sens1_inf=%s, sens1_inf=%s, "
                                  "sens1_inf=%s, sens1_inf=%s, "
                                  "sens1_inf=%s" % (bo.arbitration_id, sens1_inf, sens2_inf, wiper_Fail,
-                                                   oilavl, Vbat_inf, V1_inf, V2_inf), bo.arbitration_id)
+                                                   oilavl, Vbat_inf, V1_inf, V2_inf), bo.timestamp)
                 elif frame_id == 0x80:
                     res = db.decode_message(frame_id, data)
                     if res is not None:
@@ -213,21 +208,28 @@ class Analysis:
                                                                    res['out6_bool'], res['out6_inf'], res['out7_bool'],
                                                                    res['out7_inf'], res['out8_bool'], res['out8_inf'],
                                                                    res['out9_bool'], res['out9_inf'], res['out10_bool'],
-                                                                   res['out10_inf'], res['out11_bool'], res['out11_inf'],
-                                                                   res['out12_bool'], res['out12_inf'], res['out13_bool'],
-                                                                   res['out13_inf'], res['out14_bool'], res['out14_inf'],
-                                                                   res['out15_bool'], res['out15_inf'], res['out16_bool'],
-                                                                   res['out16_inf'], res['out17_bool'], res['out17_inf'],
-                                                                   res['out18_bool'], res['out18_inf'], res['out19_bool'],
-                                                                   res['out19_inf'], res['out20_bool'], res['out20_inf'],
+                                                                   res['out10_inf'], res['out11_bool'],
+                                                                   res['out11_inf'],
+                                                                   res['out12_bool'], res['out12_inf'],
+                                                                   res['out13_bool'],
+                                                                   res['out13_inf'], res['out14_bool'],
+                                                                   res['out14_inf'],
+                                                                   res['out15_bool'], res['out15_inf'],
+                                                                   res['out16_bool'],
+                                                                   res['out16_inf'], res['out17_bool'],
+                                                                   res['out17_inf'],
+                                                                   res['out18_bool'], res['out18_inf'],
+                                                                   res['out19_bool'],
+                                                                   res['out19_inf'], res['out20_bool'],
+                                                                   res['out20_inf'],
                                                                    res['ana1_bool'], res['ana1_inf'], res['ana2_bool'],
                                                                    res['ana2_inf'], res['uin1_bool'], res['uin1_inf'],
                                                                    res['uin2_bool'], res['uin2_inf'], res['uin3_bool'],
                                                                    res['uin3_inf'], res['uin4_bool'], res['uin4_inf'],
                                                                    res['uin5_bool'], res['uin5_inf'], res['uin6_bool'],
-                                                                   res['uin6_inf'], res['uin7_bool'], res['uin7_inf'], )
+                                                                   res['uin6_inf'], res['uin7_bool'], res['uin7_inf'],)
 
-                        self.log(content, bo.arbitration_id)
+                        self.log(content, bo.timestamp)
 
             # else:
             #     print('-------%s在dbc文件中不存在-------' % frame_id)
