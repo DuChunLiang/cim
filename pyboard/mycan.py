@@ -100,8 +100,6 @@ class Test:
                 Temp.acc_distance_val = 2
             self.send_can(can_id, can_data)
 
-            b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'
-
     def ontimer_10_1(self):
         if Temp.is_run:
             acc_mode_can_id = 0x10FE6F2A
