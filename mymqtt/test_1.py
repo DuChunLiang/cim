@@ -15,10 +15,10 @@ def on_message(client, userdata, msg):
 
 
 client = mqtt.Client(client_id="test_1")
-client.username_pw_set("ducl", "123456")
+client.username_pw_set("admin", "password")
 client.on_connect = on_connect
 client.on_message = on_message
-client.connect("127.0.0.1", 1883)
+client.connect("172.28.7.134", 1883)
 client.loop_start()
 
 

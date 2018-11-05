@@ -108,4 +108,11 @@ import random
 # d[1] = d[1] & 0xF0
 # print(d)
 # print(int(binascii.b2a_hex(d), 16))
-print(1!=1)
+# a = 3.721159420289855
+a = b'\x01\x00\x00\x00\x01\x13a\x00\x00\x00v\r~\x10\n'
+b = b'~\x10\n\x01\x00\x00\x00\x00\x10\xe4\x10\x00\x00\x05\r'
+# print(hex(b[2]))
+c = []
+for i in a:
+    c.append(hex(i))
+print(c[10])

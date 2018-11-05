@@ -51,9 +51,11 @@ class Srec:
         print("Generate binary S-Record file to '%s'" % self.out_path)
 
     def generate_srec(self, type, bin_start, read_length, address_start):
-        bin_file = open("test_1.bin", "rb")
+        # bin_file = open("test_1.bin", "rb")
+        bin_file = open("same_base.bin", "rb")
         bin_file.seek(bin_start)
-        data = bin_file.read(read_length)
+        data = bin_file.read(read_length-1) + struct.pack(">B", 2)
+        # print(data)
         f = bincopy.BinFile()
         f.add_binary(data, address=address_start)
 
@@ -61,9 +63,9 @@ class Srec:
                    % (type, str(hex(read_length)), str(hex(address_start)), binascii.crc32(data))
         out_file = open(out_path, "wb")
 
-        if type is '1':
+        if type == 1:
             address_length_bits = 16
-        elif type is '2':
+        elif type == 2:
             address_length_bits = 24
         else:
             address_length_bits = 32
@@ -120,6 +122,17 @@ class Srec:
 
 
 s = Srec()
-s.generate_srec(type=3, bin_start=0x0, read_length=1024 * 10, address_start=0x80000)
+s.generate_srec(type=2, bin_start=0x200, read_length=1000, address_start=0x88000)
 
 # print(s.create_random_data(15))
+
+# file = open("D:\lrzsz\same_base.bin", "wb+")
+# for i in range(100000):
+#     file.write(struct.pack(">B", 1))
+# file.close()
+#
+# file = open("D:\lrzsz\same_base.bin", "rb")
+# print(file.read())
+# file.close()
+
+# print(binascii.crc32(b"\x01\x00\x00\x00\x00\x10\x67\x00\x00\x00"))

@@ -18,6 +18,7 @@ class CPO:
     dbc_id_list = []  # dbc信息存储 用于判断id是否存在
     complete_package_300 = ""
     complete_package_380 = ""
+    print_content = ""
 
     def __init__(self):
         print('')
@@ -29,7 +30,7 @@ class Analysis:
         pass
 
     def log(self, content, timestamp):
-        print(round(timestamp, 3), content)
+        print(content)
 
     # 判断id在dbc文件中是否存在
     def id_is_exist(self, _id):
@@ -67,11 +68,12 @@ class Analysis:
             data_len = bo.dlc
 
             if len(sys.argv) >= 3:
-                if int(sys.argv[2], 16) != bo.arbitration_id:
+                if int(sys.argv[2], 16) != self.get_source_id(bo.arbitration_id):
                     frame_id = 0x100000000
 
             # 判断id是否存在
             if self.id_is_exist(frame_id):
+                CPO.print_content = ""
                 if frame_id == 0x200 or frame_id == 0x280:
                     ifreq_index = 1
                     if frame_id == 0x280:
@@ -95,8 +97,9 @@ class Analysis:
                         else:
                             ton = int("%02X%02X%02X" % (ton_toff_2, ton_toff_1, ton_toff_0), 16)
                             toff = int("%02X%02X%02X" % (ton_toff_5, ton_toff_4, ton_toff_3), 16)
-
-                        self.log("%s ton=%s, toff=%s" % (hex(bo.arbitration_id), str(ton), str(toff)), bo.timestamp)
+                        content = "%s ton=%s, toff=%s" % (hex(bo.arbitration_id), str(ton), str(toff))
+                        CPO.print_content += content
+                        self.log(content, bo.timestamp)
                 elif frame_id == 0x300:
                     res = db.decode_message(frame_id, data)
                     if res is not None:
@@ -130,8 +133,9 @@ class Analysis:
                                                                                   ledi_ch_current_2,
                                                                                   ledi_ch_voltage_2)
 
-                            # temp_log_file.write("%03X %s" % (hex(bo.arbitration_id), CPO.complete_package))
-                            self.log("0x%03X %s" % (bo.arbitration_id, CPO.complete_package_300), bo.timestamp)
+                            content = "0x%03X %s" % (bo.arbitration_id, CPO.complete_package_300)
+                            CPO.print_content += content
+                            self.log(content, bo.timestamp)
 
                 elif frame_id == 0x380:
                     res = db.decode_message(frame_id, data)
@@ -157,7 +161,9 @@ class Analysis:
                                                                                    out_ch_id_2, out_ch_value_2,
                                                                                    out_ch_id_3, out_ch_value_3)
 
-                            self.log("0x%03X %s" % (bo.arbitration_id, CPO.complete_package_380), bo.timestamp)
+                            content = "0x%03X %s" % (bo.arbitration_id, CPO.complete_package_380)
+                            CPO.print_content += content
+                            self.log(content, bo.timestamp)
 
                 elif frame_id == 0x100:
                     res = db.decode_message(frame_id, data)
@@ -165,7 +171,9 @@ class Analysis:
                         ana1 = int(res['ana1'])
                         ana2 = int(res['ana2'])
 
-                        self.log("0x%03X ana1=%s, ana2=%s" % (bo.arbitration_id, ana1, ana2), bo.timestamp)
+                        content = "0x%03X ana1=%s, ana2=%s" % (bo.arbitration_id, ana1, ana2)
+                        CPO.print_content += content
+                        self.log(content, bo.timestamp)
 
                 elif frame_id == 0x400:
                     res = db.decode_message(frame_id, data)
@@ -178,11 +186,14 @@ class Analysis:
                         V1_inf = int(res['v1_inf'])
                         V2_inf = int(res['v2_inf'])
 
-                        self.log("0x%03X sens1_inf=%s, sens1_inf=%s, "
-                                 "sens1_inf=%s, sens1_inf=%s, "
-                                 "sens1_inf=%s, sens1_inf=%s, "
-                                 "sens1_inf=%s" % (bo.arbitration_id, sens1_inf, sens2_inf, wiper_Fail,
-                                                   oilavl, Vbat_inf, V1_inf, V2_inf), bo.timestamp)
+                        content = "0x%03X sens1_inf=%s, sens1_inf=%s, " \
+                                  "sens1_inf=%s, sens1_inf=%s, " \
+                                  "sens1_inf=%s, sens1_inf=%s, " \
+                                  "sens1_inf=%s" % (bo.arbitration_id, sens1_inf, sens2_inf, wiper_Fail,
+                                          oilavl, Vbat_inf, V1_inf, V2_inf)
+
+                        CPO.print_content += content
+                        self.log(content, bo.timestamp)
                 elif frame_id == 0x80:
                     res = db.decode_message(frame_id, data)
                     if res is not None:
@@ -199,7 +210,7 @@ class Analysis:
                                   "out20_bool=%s, out20_inf=%s, ana1_bool=%s, ana1_inf=%s, ana2_bool=%s, ana2_inf=%s," \
                                   "uin1_bool=%s, uin1_inf=%s, uin2_bool=%s, uin2_inf=%s, uin3_bool=%s, uin3_inf=%s, " \
                                   "uin4_bool=%s, uin4_inf=%s, uin5_bool=%s, uin5_inf=%s, uin6_bool=%s, uin6_inf=%s, " \
-                                  "uin7_bool=%s, uin7_inf=%s, " % (bo.arbitration_id, res['wk1_state'],
+                                  "uin7_bool=%s, uin7_inf=%s" % (bo.arbitration_id, res['wk1_state'],
                                                                    res['wk2_state'], res['icu1_bool'], res['icu1_inf'],
                                                                    res['icu2_bool'], res['icu2_inf'], res['hb1_bool'],
                                                                    res['hb1_inf'], res['hb2_bool'], res['hb2_inf'],
@@ -228,8 +239,12 @@ class Analysis:
                                                                    res['uin3_inf'], res['uin4_bool'], res['uin4_inf'],
                                                                    res['uin5_bool'], res['uin5_inf'], res['uin6_bool'],
                                                                    res['uin6_inf'], res['uin7_bool'], res['uin7_inf'],)
-
+                        CPO.print_content += content
                         self.log(content, bo.timestamp)
+
+            # print_file = open("print_temp.log", "w+")
+            # print_file.write(CPO.print_content)
+            # print_file.close()
 
             # else:
             #     print('-------%s在dbc文件中不存在-------' % frame_id)
