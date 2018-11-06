@@ -3,12 +3,11 @@
 import pyb
 from pyb import Pin
 from pyb import LED
-from pyb import Switch
+# from pyb import Switch
 from pyb import CAN
 import ustruct
 import micropython
 import random
-# import _thread
 
 micropython.alloc_emergency_exception_buf(100)
 
@@ -26,7 +25,7 @@ class Temp:
     speed = 0
     count = 0
 
-    is_run = False
+    is_run = True
 
 
 class Data:
@@ -39,7 +38,6 @@ class Test:
         self.can = CAN(1)
         self.can.init(CAN.NORMAL, extframe=True, prescaler=21, sjw=1, bs1=5, bs2=10)
         self.can.setfilter(0, CAN.MASK32, 0, (0x0, 0x0))
-
 
     def run_switch(self):
         freq_time = pyb.millis() - Temp.op_time
@@ -62,28 +60,28 @@ class Test:
 
     def key_on_off(self):
         if Temp.is_run:
-            switch_pin = Pin('X1', Pin.OUT_OD)
+            switch_pin = Pin('X22', Pin.OUT_OD)
             switch_pin.low()
             pyb.delay(500)
             switch_pin.high()
 
     def key_down(self):
         if Temp.is_run:
-            down_pin = Pin('Y6', Pin.OUT_OD)
+            down_pin = Pin('X21', Pin.OUT_OD)
             down_pin.low()
             pyb.delay(500)
             down_pin.high()
 
     def key_up(self):
         if Temp.is_run:
-            up_pin = Pin('Y7', Pin.OUT_OD)
+            up_pin = Pin('X20', Pin.OUT_OD)
             up_pin.low()
             pyb.delay(500)
             up_pin.high()
 
     def key_enter(self):
         if Temp.is_run:
-            enter_pin = Pin('Y8', Pin.OUT_OD)
+            enter_pin = Pin('X19', Pin.OUT_OD)
             enter_pin.low()
             pyb.delay(500)
             enter_pin.high()
@@ -178,8 +176,8 @@ def key_thread():
 
 def can_thread():
     t = Test()
-    sw = Switch()
-    sw.callback(t.run_switch)
+    # sw = Switch()
+    # sw.callback(t.run_switch)
     while True:
         pyb.delay(1)
         Temp.count += 1
