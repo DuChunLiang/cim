@@ -61,14 +61,18 @@ class CanShow:
         self.add_label()
         self.add_button()
 
-    @staticmethod
-    def thread_run():
-        if CPO.run_function is not None:
-            t = threading.Thread(target=CPO.run_function)
-            t.setDaemon(True)
-            t.start()
+    def thread_run(self):
+        if 'start' == button_var.get():
+            if CPO.run_function is not None:
+                my_thread = threading.Thread(target=CPO.run_function)
+                my_thread.setDaemon(True)
+                my_thread.start()
+                button_var.set("exit")
+            else:
+                raise Exception("variable 'run_function' is None, please set 'CPO.run_function'")
         else:
-            raise Exception("variable 'run_function' is None, please set 'CPO.run_function'")
+            sys.exit(0)
+            # button_var.set("start")
 
     def add_label(self):
         label_1 = tk.Label(self.root, textvariable=self.var_1)
@@ -89,8 +93,10 @@ class CanShow:
         label_7.place(x=30, y=200, anchor="nw")
 
     def add_button(self):
+        global button_var
+        button_var = tk.StringVar(self.root, "start")
         CPO.run_function = self.rev_data
-        button = tk.Button(self.root, text='start', width=15,
+        button = tk.Button(self.root, textvariable=button_var, width=15,
                            height=1, command=self.thread_run)
         button.pack(side=tk.BOTTOM)
 
