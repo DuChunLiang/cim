@@ -92,7 +92,6 @@ import random
 #     print(random.randint(1000, 3000))
 
 
-
 # a = binascii.crc32("123456".encode())
 # v = "%i%i%i" % (int())bytes(0x313238).decode("ascii")
 
@@ -117,4 +116,14 @@ import random
 #     c.append(hex(i))
 # print(c[10])
 
-print(time.time())
+
+class A:
+
+    def __init__(self):
+        print("init")
+        self.val = 1
+
+    def f(self):
+        print(self.val)
+
+print(A().val)
