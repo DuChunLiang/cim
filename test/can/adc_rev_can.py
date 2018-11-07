@@ -30,7 +30,7 @@ class Analysis:
     def __init__(self):
         pass
 
-    def log(self, content, timestamp):
+    def log(self, content):
         print(content)
 
     # 判断id在dbc文件中是否存在
@@ -74,7 +74,6 @@ class Analysis:
         can_bus = can.interface.Bus()
 
         while True:
-            CPO.test_time = time.time()
             bo = can_bus.recv()
             frame_id = bo.arbitration_id
             data = (bo.data + bytearray([0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]))[:8]
@@ -102,7 +101,7 @@ class Analysis:
                                                                       self.get_current(OUT_1, frame_id),
                                                                       signal_2, str(OUT_2),
                                                                       self.get_current(OUT_2, frame_id))
-                        self.log(content, bo.timestamp)
+                        self.log(content)
 
             # else:
             #     print('-------%s在dbc文件中不存在-------' % frame_id)

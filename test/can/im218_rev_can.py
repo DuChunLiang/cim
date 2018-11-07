@@ -21,7 +21,7 @@ class CPO:
     print_content = ""
 
     def __init__(self):
-        print('')
+        pass
 
 
 class Analysis:
