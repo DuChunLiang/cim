@@ -18,7 +18,8 @@ def logger(content):
 class CPO:
     def __init__(self):
         pass
-
+    is_run = False
+    thread_run = False
     run_function = None
     dbc_id_list = []  # dbc信息存储 用于判断id是否存在
     msg_signal_dict = {0x401: ['14', '13'], 0x402: ['01', '02'], 0x403: ['04', '03'],
@@ -43,48 +44,67 @@ class CanShow:
 
     def __init__(self, wigth=800, higth=500):
         self.dbc_file = "../../dbc/adc_lc.dbc"
-        self.root = tk.Tk(className='Can Info Show')
+        self.root = tk.Tk()
+        self.root.title('Can Show Tool')
         sw = self.root.winfo_screenwidth()
         sh = self.root.winfo_screenheight()
         x = (sw-wigth) / 2
         y = (sh-higth) / 2
         self.root.geometry("%dx%d+%d+%d" % (wigth, higth, x, y))
 
-        self.var_1 = tk.StringVar()
-        self.var_2 = tk.StringVar()
-        self.var_3 = tk.StringVar()
-        self.var_4 = tk.StringVar()
-        self.var_5 = tk.StringVar()
+        self.label_1 = tk.Label(self.root, text="0x401")
+        self.label_2 = tk.Label(self.root, text='0x402')
+        self.label_3 = tk.Label(self.root, text='0x403')
+        self.label_4 = tk.Label(self.root, text='0x404')
+        self.label_5 = tk.Label(self.root, text='0x405')
+        self.label_6 = tk.Label(self.root, text="0x406")
+        self.label_7 = tk.Label(self.root, text='0x407')
+        self.label_8 = tk.Label(self.root, text='0x408')
+        self.label_9 = tk.Label(self.root, text='0x409')
+        self.label_10 = tk.Label(self.root, text='0x410')
 
         self.add_label()
         self.add_button()
 
     @staticmethod
     def thread_run():
-        if CPO.run_function is not None:
-            t = threading.Thread(target=CPO.run_function)
-            t.setDaemon(True)
-            t.start()
+        if not CPO.thread_run:
+            if CPO.run_function is not None:
+                if not CPO.is_run:
+                    my_thread = threading.Thread(target=CPO.run_function)
+                    my_thread.setDaemon(True)
+                    my_thread.start()
+                    CPO.is_run = True
+                CPO.thread_run = True
+                button['text'] = "stop"
+                button['bg'] = "green"
+                logger("start")
+            else:
+                raise Exception("variable 'run_function' is None, please set 'CPO.run_function'")
         else:
-            raise Exception("variable 'run_function' is None, please set 'CPO.run_function'")
+            CPO.thread_run = False
+            button['text'] = "start"
+            button['bg'] = "#DD4822"
+            logger("stop")
 
     def add_label(self):
-        label_1 = tk.Label(self.root, textvariable=self.var_1)
-        # label_2 = tk.Label(self.root, text='d45s6f4a56sd4f56sa4df56sa4df564sadf')
-        # label_3 = tk.Label(root, text='d45s6f4a56sd4f56sa4df56sa4df564sadf')
-        # label_4 = tk.Label(root, text='d45s6f4a56sd4f56sa4df56sa4df564sadf')
-        # label_5 = tk.Label(root, text='d45s6f4a56sd4f56sa4df56sa4df564sadf')
-        label_1.place(x=30, y=20, anchor="w")
-        # label_2.place(x=30, y=50, anchor="w")
-        # label_3.pack()
-        # label_4.pack()
-        # label_5.pack()
+        self.label_1.place(x=30, y=20, anchor="nw")
+        self.label_2.place(x=30, y=50, anchor="nw")
+        self.label_3.place(x=30, y=80, anchor="nw")
+        self.label_4.place(x=30, y=110, anchor="nw")
+        self.label_5.place(x=30, y=140, anchor="nw")
+        self.label_6.place(x=30, y=170, anchor="nw")
+        self.label_7.place(x=30, y=200, anchor="nw")
+        self.label_8.place(x=30, y=230, anchor="nw")
+        self.label_9.place(x=30, y=260, anchor="nw")
+        self.label_10.place(x=30, y=290, anchor="nw")
 
     def add_button(self):
+        global button
         CPO.run_function = self.rev_data
         button = tk.Button(self.root, text='start', width=15,
-                           height=1, command=self.thread_run)
-        button.pack(side=tk.BOTTOM)
+                           height=1, command=self.thread_run, bg="#DD4822", fg="white")
+        button.pack(side=tk.BOTTOM, pady=20)
 
     def run(self):
         self.root.mainloop()
@@ -115,7 +135,8 @@ class CanShow:
             try:
                 frame = ch.read(5 * 60 * 1000)
                 frame.data = (frame.data + bytearray([0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]))[:8]
-                self._op_frame(frame, db)
+                if CPO.thread_run:
+                    self._op_frame(frame, db)
             except Exception as e:
                 self._tear_down_channel(ch)
                 print(e)
@@ -187,7 +208,26 @@ class CanShow:
                                                                   signal_2, str(OUT_2),
                                                                   self.get_current(OUT_2, frame_id))
                     logger(content)
-                    self.var_1.set(content)
+                    if frame_id == 0x401:
+                        self.label_1['text'] = content
+                    elif frame_id == 0x402:
+                        self.label_2['text'] = content
+                    elif frame_id == 0x403:
+                        self.label_3['text'] = content
+                    elif frame_id == 0x404:
+                        self.label_4['text'] = content
+                    elif frame_id == 0x405:
+                        self.label_5['text'] = content
+                    elif frame_id == 0x406:
+                        self.label_6['text'] = content
+                    elif frame_id == 0x407:
+                        self.label_7['text'] = content
+                    elif frame_id == 0x408:
+                        self.label_8['text'] = content
+                    elif frame_id == 0x409:
+                        self.label_9['text'] = content
+                    else:
+                        self.label_10['text'] = content
 
 
 CanShow().run()

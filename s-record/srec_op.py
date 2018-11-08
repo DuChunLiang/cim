@@ -51,8 +51,8 @@ class Srec:
         print("Generate binary S-Record file to '%s'" % self.out_path)
 
     def generate_srec(self, type, bin_start, read_length, address_start):
-        bin_file = open("test_1.bin", "rb")
-        # bin_file = open("same_base.bin", "rb")
+        # bin_file = open("test_1.bin", "rb")
+        bin_file = open("same_base.bin", "rb")
         bin_file.seek(bin_start)
         data = bin_file.read(read_length-1) + struct.pack(">B", 2)
         # print(data)
@@ -122,13 +122,13 @@ class Srec:
 
 
 s = Srec()
-s.generate_srec(type=2, bin_start=0x200, read_length=0x04000, address_start=0x00088000)
-s.generate_srec(type=2, bin_start=0x300, read_length=0x04000, address_start=0x00098000)
-s.generate_srec(type=2, bin_start=0x400, read_length=0x04000, address_start=0x000A8000)
-s.generate_srec(type=2, bin_start=0x500, read_length=0x04000, address_start=0x000B8000)
-s.generate_srec(type=2, bin_start=0x600, read_length=0x04000, address_start=0x000C8000)
-s.generate_srec(type=2, bin_start=0x700, read_length=0x04000, address_start=0x00004000)
-s.generate_srec(type=2, bin_start=0x800, read_length=0x04000, address_start=0x000E8000)
+s.generate_srec(type=2, bin_start=0x200, read_length=0x3000, address_start=0x5000)
+# s.generate_srec(type=2, bin_start=0x300, read_length=0x04000, address_start=0x00098000)
+# s.generate_srec(type=2, bin_start=0x400, read_length=0x04000, address_start=0x000A8000)
+# s.generate_srec(type=2, bin_start=0x500, read_length=0x04000, address_start=0x000B8000)
+# s.generate_srec(type=2, bin_start=0x600, read_length=0x04000, address_start=0x000C8000)
+# s.generate_srec(type=2, bin_start=0x700, read_length=0x04000, address_start=0x00004000)
+# s.generate_srec(type=2, bin_start=0x800, read_length=0x04000, address_start=0x000E8000)
 
 # print(s.create_random_data(15))
 

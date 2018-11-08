@@ -19,6 +19,8 @@ class CPO:
     def __init__(self):
         pass
 
+    is_run = False
+    thread_run = False
     run_function = None
     dbc_id_list = []  # dbc信息存储 用于判断id是否存在
     msg_signal_dict = {0x401: ['14', '13'], 0x402: ['01', '02'], 0x403: ['04', '03'],
@@ -43,62 +45,61 @@ class CanShow:
 
     def __init__(self, wigth=800, higth=500):
         self.dbc_file = "../../dbc/IM218.dbc"
-        self.root = tk.Tk(className='Can Info Show')
+        self.root = tk.Tk()
+        self.root.title('Can Show Tool')
         sw = self.root.winfo_screenwidth()
         sh = self.root.winfo_screenheight()
         x = (sw-wigth) / 2
         y = (sh-higth) / 2
         self.root.geometry("%dx%d+%d+%d" % (wigth, higth, x, y))
 
-        self.var_1 = tk.StringVar(self.root, 1)
-        self.var_2 = tk.StringVar(self.root, 2)
-        self.var_3 = tk.StringVar(self.root, 3)
-        self.var_4 = tk.StringVar(self.root, 4)
-        self.var_5 = tk.StringVar(self.root, 5)
-        self.var_6 = tk.StringVar(self.root, 6)
-        self.var_7 = tk.StringVar(self.root, 7)
+        self.label_1 = tk.Label(self.root, text="0x200")
+        self.label_2 = tk.Label(self.root, text="0x280")
+        self.label_3 = tk.Label(self.root, text="0x300")
+        self.label_4 = tk.Label(self.root, text="0x380")
+        self.label_5 = tk.Label(self.root, text="0x100")
+        self.label_6 = tk.Label(self.root, text="0x400")
+        self.label_7 = tk.Label(self.root, text="0x080", wraplength=500, justify='left')
 
         self.add_label()
         self.add_button()
 
     def thread_run(self):
-        if 'start' == button_var.get():
+        if not CPO.thread_run:
             if CPO.run_function is not None:
-                my_thread = threading.Thread(target=CPO.run_function)
-                my_thread.setDaemon(True)
-                my_thread.start()
-                button_var.set("exit")
+                if not CPO.is_run:
+                    my_thread = threading.Thread(target=CPO.run_function)
+                    my_thread.setDaemon(True)
+                    my_thread.start()
+                    CPO.is_run = True
+                CPO.thread_run = True
+                button['text'] = "stop"
+                button['bg'] = "green"
+                logger("start")
             else:
                 raise Exception("variable 'run_function' is None, please set 'CPO.run_function'")
         else:
-            sys.exit(0)
-            # button_var.set("start")
+            CPO.thread_run = False
+            button['text'] = "start"
+            button['bg'] = "#DD4822"
+            logger("stop")
 
     def add_label(self):
-        label_1 = tk.Label(self.root, textvariable=self.var_1)
-        label_2 = tk.Label(self.root, textvariable=self.var_2)
-        label_3 = tk.Label(self.root, textvariable=self.var_3)
-        label_4 = tk.Label(self.root, textvariable=self.var_4)
-        label_5 = tk.Label(self.root, textvariable=self.var_5)
-        label_6 = tk.Label(self.root, textvariable=self.var_6)
-        label_7 = tk.Label(self.root, textvariable=self.var_7,
-                           wraplength=500, justify='left')
+        self.label_1.place(x=30, y=20, anchor="nw")
+        self.label_2.place(x=30, y=50, anchor="nw")
+        self.label_3.place(x=30, y=80, anchor="nw")
+        self.label_4.place(x=30, y=110, anchor="nw")
+        self.label_5.place(x=30, y=140, anchor="nw")
+        self.label_6.place(x=30, y=170, anchor="nw")
+        self.label_7.place(x=30, y=200, anchor="nw")
 
-        label_1.place(x=30, y=20, anchor="nw")
-        label_2.place(x=30, y=50, anchor="nw")
-        label_3.place(x=30, y=80, anchor="nw")
-        label_4.place(x=30, y=110, anchor="nw")
-        label_5.place(x=30, y=140, anchor="nw")
-        label_6.place(x=30, y=170, anchor="nw")
-        label_7.place(x=30, y=200, anchor="nw")
 
     def add_button(self):
-        global button_var
-        button_var = tk.StringVar(self.root, "start")
+        global button
         CPO.run_function = self.rev_data
-        button = tk.Button(self.root, textvariable=button_var, width=15,
-                           height=1, command=self.thread_run)
-        button.pack(side=tk.BOTTOM)
+        button = tk.Button(self.root, text="start", width=15,
+                           height=1, command=self.thread_run, bg="#DD4822", fg="white")
+        button.pack(side=tk.BOTTOM, pady=20)
 
     def run(self):
         self.root.mainloop()
@@ -119,7 +120,7 @@ class CanShow:
         ch.close()
 
     def rev_data(self):
-        print("Listening...")
+        logger("Listening...")
         db = kvadblib.Dbc(filename=self.dbc_file)
         ch = self._set_up_channel()
         for m in db.messages():
@@ -129,7 +130,8 @@ class CanShow:
             try:
                 frame = ch.read(5 * 60 * 1000)
                 frame.data = (frame.data + bytearray([0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]))[:8]
-                self._op_frame(frame, db)
+                if CPO.thread_run:
+                    self._op_frame(frame, db)
             except Exception as e:
                 self._tear_down_channel(ch)
                 print(e)
@@ -205,9 +207,9 @@ class CanShow:
                     CPO.print_content += content
                     logger(content)
                     if ifreq_index == 1:
-                        self.var_1.set(content)
+                        self.label_1['text'] = content
                     else:
-                        self.var_2.set(content)
+                        self.label_2['text'] = content
             elif frame_id == 0x300:
                 if res is not None:
                     ledi_ch_id_ex = int(res['ledi_ch_id_ex'])
@@ -243,7 +245,7 @@ class CanShow:
                         content = "0x%03X %s" % (show_frame_id, CPO.complete_package_300)
                         CPO.print_content += content
                         logger(content)
-                        self.var_3.set(content)
+                        self.label_3['text'] = content
 
             elif frame_id == 0x380:
                 if res is not None:
@@ -271,7 +273,7 @@ class CanShow:
                         content = "0x%03X %s" % (show_frame_id, CPO.complete_package_380)
                         CPO.print_content += content
                         logger(content)
-                        self.var_4.set(content)
+                        self.label_4['text'] = content
             elif frame_id == 0x100:
                 if res is not None:
                     ana1 = int(res['ana1'])
@@ -280,7 +282,7 @@ class CanShow:
                     content = "0x%03X ana1=%s, ana2=%s" % (show_frame_id, ana1, ana2)
                     CPO.print_content += content
                     logger(content)
-                    self.var_5.set(content)
+                    self.label_5['text'] = content
             elif frame_id == 0x400:
                 if res is not None:
                     sens1_inf = int(res['sens1_inf'])
@@ -299,10 +301,10 @@ class CanShow:
 
                     CPO.print_content += content
                     logger(content)
-                    self.var_6.set(content)
+                    self.label_6['text'] = content
             elif frame_id == 0x80:
                 if res is not None:
-                    content = "0x%03X - wk1_state=%s, wk2_state=%s, icu1_bool=%s, icu1_inf=%s," \
+                    content = "0x%03X wk1_state=%s, wk2_state=%s, icu1_bool=%s, icu1_inf=%s," \
                               "icu2_bool=%s, icu2_inf=%s, hb1_bool=%s, " \
                               "hb1_inf=%s, hb2_bool=%s, hb2_inf=%s, hb3_bool=%s, " \
                               "hb3_inf=%s, hb4_bool=%s, hb4_inf=%s, out5_bool=%s, out5_inf=%s, " \
@@ -346,7 +348,7 @@ class CanShow:
                                                              res['uin6_inf'], res['uin7_bool'], res['uin7_inf'],)
                     CPO.print_content += content
                     logger(content)
-                    self.var_7.set(content)
+                    self.label_7['text'] = content
 
 
 CanShow().run()
