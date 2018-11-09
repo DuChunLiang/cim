@@ -35,6 +35,7 @@ BS_:
 
 BU_: ECU ECM
 
+
 BO_ 448 CeusAMcan_iOutV: 4 ECU
  SG_ sensor_command : 16|16@1+ (1,0) [0|65535] ""  ECU
 
@@ -104,34 +105,20 @@ BO_ 896 CeusAMcan_iOutI: 8 ECU
  SG_ out_ch2_id : 4|4@1+ (1,0) [0|15] "" Vector__XXX
 
 BO_ 768 CeusAMcan_iLedI: 8 ECU
- SG_ ledi_ch10_voltage m9 : 48|16@1+ (1,0) [0|65535] "" Vector__XXX
- SG_ ledi_ch10_id m9 : 44|4@1+ (1,0) [0|15] "" Vector__XXX
- SG_ ledi_ch10_current m9 : 32|12@1+ (1,0) [0|4095] "" Vector__XXX
- SG_ ledi_ch9_voltage m9 : 16|16@1+ (1,0) [0|65535] "" Vector__XXX
- SG_ ledi_ch9_current m9 : 0|12@1+ (1,0) [0|4095] "" Vector__XXX
- SG_ ledi_ch8_voltage m7 : 48|16@1+ (1,0) [0|65535] "" Vector__XXX
- SG_ ledi_ch8_id m7 : 44|4@1+ (1,0) [0|15] "" Vector__XXX
- SG_ ledi_ch8_current m7 : 32|12@1+ (1,0) [0|4095] "" Vector__XXX
- SG_ ledi_ch7_voltage m7 : 16|16@1+ (1,0) [0|65535] "" Vector__XXX
- SG_ ledi_ch7_current m7 : 0|12@1+ (1,0) [0|4095] "" Vector__XXX
- SG_ ledi_ch6_voltage m5 : 48|16@1+ (1,0) [0|65535] "" Vector__XXX
- SG_ ledi_ch6_id m5 : 44|4@1+ (1,0) [0|15] "" Vector__XXX
- SG_ ledi_ch6_current m5 : 32|12@1+ (1,0) [0|4095] "" Vector__XXX
- SG_ ledi_ch5_voltage m5 : 16|16@1+ (1,0) [0|65535] "" Vector__XXX
- SG_ ledi_ch5_current m5 : 0|12@1+ (1,0) [0|4095] "" Vector__XXX
- SG_ ledi_ch4_voltage m3 : 48|16@1+ (1,0) [0|65535] "" Vector__XXX
- SG_ ledi_ch4_id m3 : 44|4@1+ (1,0) [0|15] "" Vector__XXX
- SG_ ledi_ch4_current m3 : 32|12@1+ (1,0) [0|4095] "" Vector__XXX
- SG_ ledi_ch3_voltage m3 : 16|16@1+ (1,0) [0|65535] "" Vector__XXX
- SG_ ledi_ch3_current m3 : 0|12@1+ (1,0) [0|4095] "" Vector__XXX
- SG_ ledi_ch2_voltage m1 : 48|16@1+ (1,0) [0|65535] "" Vector__XXX
- SG_ ledi_ch2_id m1 : 44|4@1+ (1,0) [0|15] "" Vector__XXX
- SG_ ledi_ch2_current m1 : 32|12@1+ (1,0) [0|4095] "" Vector__XXX
- SG_ ledi_ch1_voltage m1 : 16|16@1+ (1,0) [0|65535] "" Vector__XXX
- SG_ ledi_ch_id_ex M : 12|4@1+ (1,0) [0|15] "" Vector__XXX
- SG_ ledi_ch1_current m1 : 0|12@1+ (1,0) [0|4095] "" Vector__XXX
+ SG_ ledi_ch1_id : 12|4@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ ledi_ch2_voltage : 48|16@1+ (1,0) [0|65535] "" Vector__XXX
+ SG_ ledi_ch2_id : 44|4@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ ledi_ch2_current : 32|12@1+ (1,0) [0|4095] "" Vector__XXX
+ SG_ ledi_ch1_voltage : 16|16@1+ (1,0) [0|65535] "" Vector__XXX
+ SG_ ledi_ch1_current : 0|12@1+ (1,0) [0|4095] "" Vector__XXX
 
-BO_ 384 CeusAMcan_iAna2: 2 ECU
+BO_ 384 CeusAMcan_iAna2: 8 ECU
+ SG_ ch4_id : 60|4@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ ch4_value : 48|12@1+ (1,0) [0|4095] "" Vector__XXX
+ SG_ ch3_id : 44|4@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ ch3_value : 32|12@1+ (1,0) [0|4095] "" Vector__XXX
+ SG_ ch2_id : 28|4@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ ch2_value : 16|12@1+ (1,0) [0|4095] "" Vector__XXX
  SG_ ch1_id : 12|4@1+ (1,0) [0|15] "" Vector__XXX
  SG_ ch1_value : 0|12@1+ (1,0) [0|4095] "" Vector__XXX
 
@@ -245,9 +232,7 @@ BA_ "GenMsgCycleTime" BO_ 768 1000;
 BA_ "GenMsgCycleTime" BO_ 384 1000;
 BA_ "GenMsgCycleTime" BO_ 256 1000;
 BA_ "GenMsgCycleTime" BO_ 1024 200;
+BA_ "GenSigInactiveValue" SG_ 384 ch4_id 0;
+BA_ "GenSigInactiveValue" SG_ 384 ch3_id 0;
+BA_ "GenSigInactiveValue" SG_ 384 ch2_id 0;
 BA_ "GenSigInactiveValue" SG_ 384 ch1_id 0;
-SIG_GROUP_ 768 Signal_Group_5 1 : ledi_ch10_voltage ledi_ch10_id ledi_ch10_current ledi_ch9_voltage ledi_ch9_current;
-SIG_GROUP_ 768 Signal_Group_4 1 : ledi_ch8_voltage ledi_ch8_id ledi_ch8_current ledi_ch7_voltage ledi_ch7_current;
-SIG_GROUP_ 768 Signal_Group_3 1 : ledi_ch6_voltage ledi_ch6_id ledi_ch6_current ledi_ch5_voltage ledi_ch5_current;
-SIG_GROUP_ 768 Signal_Group_2 1 : ledi_ch4_voltage ledi_ch4_id ledi_ch4_current ledi_ch3_voltage ledi_ch3_current;
-SIG_GROUP_ 768 Signal_Group_1 1 : ledi_ch1_voltage ledi_ch1_current ledi_ch2_current ledi_ch2_id ledi_ch2_voltage;

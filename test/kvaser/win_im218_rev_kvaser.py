@@ -27,8 +27,10 @@ class CPO:
 
     multiple_list = []
     multiple_count = 0
+    multiple_id_180 = []
     multiple_id_300 = []
     multiple_id_380 = []
+    complete_package_180 = ""
     complete_package_300 = ""
     complete_package_380 = ""
     receive_is_run = False
@@ -70,6 +72,7 @@ class CanShow:
         self.label_5 = tk.Label(self.root, text="0x100")
         self.label_6 = tk.Label(self.root, text="0x400")
         self.label_7 = tk.Label(self.root, text="0x080", wraplength=500, justify='left')
+        self.label_8 = tk.Label(self.root, text="0x180")
 
         self.add_label()
         self.add_button()
@@ -111,11 +114,12 @@ class CanShow:
     def add_label(self):
         self.label_1.place(x=30, y=20, anchor="nw")
         self.label_2.place(x=30, y=50, anchor="nw")
-        self.label_3.place(x=30, y=80, anchor="nw")
-        self.label_4.place(x=30, y=110, anchor="nw")
-        self.label_5.place(x=30, y=140, anchor="nw")
-        self.label_6.place(x=30, y=170, anchor="nw")
-        self.label_7.place(x=30, y=200, anchor="nw")
+        self.label_8.place(x=30, y=80, anchor="nw")
+        self.label_3.place(x=30, y=110, anchor="nw")
+        self.label_4.place(x=30, y=140, anchor="nw")
+        self.label_5.place(x=30, y=170, anchor="nw")
+        self.label_6.place(x=30, y=200, anchor="nw")
+        self.label_7.place(x=30, y=230, anchor="nw")
 
     def add_button(self):
         global receive_button
@@ -292,41 +296,72 @@ class CanShow:
                     self.label_1['text'] = content
                 else:
                     self.label_2['text'] = content
+        elif frame_id == 0x180:
+            if res is not None:
+                ch1_id = int(res['ch1_id'])
+                ch1_value = int(res['ch1_value'])
+                ch2_id = int(res['ch2_id'])
+                ch2_value = int(res['ch2_value'])
+                ch3_id = int(res['ch3_id'])
+                ch3_value = int(res['ch3_value'])
+                ch4_id = int(res['ch4_id'])
+                ch4_value = int(res['ch4_value'])
+
+                pack_data = ""
+                if ch1_id > 0:
+                    pack_data += "{id:%s value:%s}" % (ch1_id, ch1_value)
+                if ch2_id > 0:
+                    pack_data += "{id:%s value:%s}" % (ch2_id, ch2_value)
+                if ch3_id > 0:
+                    pack_data += "{id:%s value:%s}" % (ch3_id, ch3_value)
+                if ch4_id > 0:
+                    pack_data += "{id:%s value:%s}" % (ch4_id, ch4_value)
+
+                if len(CPO.multiple_id_180) == 0:
+                    self.create_multiple_id(ch1_id, frame_id)
+                else:
+
+                    if ch1_id == CPO.multiple_id_180[0]:
+                        CPO.complete_package_180 = ""
+                        CPO.complete_package_180 += pack_data
+                    elif ch1_id != CPO.multiple_id_180[len(CPO.multiple_id_180) - 1]:
+                        CPO.complete_package_180 += pack_data
+                    else:
+                        CPO.complete_package_180 += pack_data
+
+                        content = "0x%03X %s" % (show_frame_id, CPO.complete_package_180)
+                        logger(content)
+                        self.label_8['text'] = content
         elif frame_id == 0x300:
             if res is not None:
-                ledi_ch_id_ex = int(res['ledi_ch_id_ex'])
-                ledi_ch_current_1 = int(res['ledi_ch%s_current' % str(ledi_ch_id_ex)])
-                ledi_ch_voltage_1 = int(res['ledi_ch%s_voltage' % str(ledi_ch_id_ex)])
-                ledi_ch_id_2 = int(res['ledi_ch%s_id' % str(ledi_ch_id_ex + 1)])
-                ledi_ch_current_2 = int(res['ledi_ch%s_current' % str(ledi_ch_id_ex + 1)])
-                ledi_ch_voltage_2 = int(res['ledi_ch%s_voltage' % str(ledi_ch_id_ex + 1)])
+                ledi_ch1_current = int(res['ledi_ch1_current'])
+                ledi_ch1_id = int(res['ledi_ch1_id'])
+                ledi_ch1_voltage = int(res['ledi_ch1_voltage'])
+                ledi_ch2_current = int(res['ledi_ch2_current'])
+                ledi_ch2_id = int(res['ledi_ch2_id'])
+                ledi_ch2_voltage = int(res['ledi_ch2_voltage'])
 
-                if ledi_ch_id_ex == 1:
-                    CPO.complete_package_300 = ""
-                    CPO.complete_package_300 += "{%s %s %s}{%s %s %s}" % (ledi_ch_id_ex,
-                                                                          ledi_ch_current_1,
-                                                                          ledi_ch_voltage_1,
-                                                                          ledi_ch_id_2,
-                                                                          ledi_ch_current_2,
-                                                                          ledi_ch_voltage_2)
-                elif ledi_ch_id_ex < 9:
-                    CPO.complete_package_300 += "{%s %s %s}{%s %s %s}" % (ledi_ch_id_ex,
-                                                                          ledi_ch_current_1,
-                                                                          ledi_ch_voltage_1,
-                                                                          ledi_ch_id_2,
-                                                                          ledi_ch_current_2,
-                                                                          ledi_ch_voltage_2)
+                pack_data = ""
+                if ledi_ch1_id > 0:
+                    pack_data += "{id:%s current:%s voltage:%s}" % (ledi_ch1_id, ledi_ch1_current, ledi_ch1_voltage)
+                if ledi_ch2_id > 0:
+                    pack_data += "{id:%s current:%s voltage:%s}" % (ledi_ch2_id, ledi_ch2_current, ledi_ch2_voltage)
+
+                if len(CPO.multiple_id_300) == 0:
+                    self.create_multiple_id(ledi_ch1_id, frame_id)
                 else:
-                    CPO.complete_package_300 += "{%s %s %s}{%s %s %s}" % (ledi_ch_id_ex,
-                                                                          ledi_ch_current_1,
-                                                                          ledi_ch_voltage_1,
-                                                                          ledi_ch_id_2,
-                                                                          ledi_ch_current_2,
-                                                                          ledi_ch_voltage_2)
 
-                    content = "0x%03X %s" % (show_frame_id, CPO.complete_package_300)
-                    logger(content)
-                    self.label_3['text'] = content
+                    if ledi_ch1_id == CPO.multiple_id_300[0]:
+                        CPO.complete_package_300 = ""
+                        CPO.complete_package_300 += pack_data
+                    elif ledi_ch1_id != CPO.multiple_id_300[len(CPO.multiple_id_300) - 1]:
+                        CPO.complete_package_300 += pack_data
+                    else:
+                        CPO.complete_package_300 += pack_data
+
+                        content = "0x%03X %s" % (show_frame_id, CPO.complete_package_300)
+                        logger(content)
+                        self.label_3['text'] = content
 
         elif frame_id == 0x380:
             if res is not None:
