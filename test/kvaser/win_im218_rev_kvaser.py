@@ -424,21 +424,21 @@ class CanShow:
                 self.label_6['text'] = content
         elif frame_id == 0x80:
             if res is not None:
-                content = "0x%03X wk1_state=%s     wk2_state=%s  icu1_bool=%s  icu1_inf=%s  " \
-                          "icu2_bool=%s  icu2_inf=%s hb1_bool=%s  hb1_inf=%s  \n          hb2_bool=%s     " \
-                          "hb2_inf=%s      hb3_bool=%s  hb3_inf=%s  hb4_bool=%s  " \
-                          "hb4_inf=%s  out5_bool=%s  out5_inf=%s  \n          " \
-                          "out6_bool=%s    out6_inf=%s     out7_bool=%s  out7_inf=%s  out8_bool=%s  out8_inf=%s  " \
-                          "out9_bool=%s  out9_inf=%s  \n          out10_bool=%s  out10_inf=%s   out11_bool=%s  " \
-                          "out11_inf=%s  out12_bool=%s  out12_inf=%s  out13_bool=%s  out13_inf=%s  \n          " \
+                content = "0x%03X wk1_state=%s     wk2_state=%s  icu1_bool=%s    icu1_inf=%s  " \
+                          "   icu2_bool=%s    icu2_inf=%s     hb1_bool=%s     hb1_inf=%s  \n          hb2_bool=%s     " \
+                          "hb2_inf=%s     hb3_bool=%s     hb3_inf=%s     hb4_bool=%s  " \
+                          "   hb4_inf=%s     out5_bool=%s    out5_inf=%s  \n          " \
+                          "out6_bool=%s    out6_inf=%s    out7_bool=%s    out7_inf=%s    out8_bool=%s    out8_inf=%s  " \
+                          "  out9_bool=%s    out9_inf=%s  \n          out10_bool=%s  out10_inf=%s   out11_bool=%s  " \
+                          "out11_inf=%s  out12_bool=%s  out12_inf=%s  out13_bool=%s   out13_inf=%s  \n          " \
                           "out14_bool=%s  out14_inf=%s   out15_bool=%s  out15_inf=%s  " \
-                          "out16_bool=%s  out16_inf=%s  out17_bool=%s  out17_inf=%s  \n          " \
+                          "out16_bool=%s  out16_inf=%s  out17_bool=%s   out17_inf=%s  \n          " \
                           "out18_bool=%s  out18_inf=%s   out19_bool=%s  out19_inf=%s  " \
-                          "out20_bool=%s  out20_inf=%s  ana1_bool=%s  ana1_inf=%s  \n          " \
-                          "ana2_bool=%s   ana2_inf=%s     uin1_bool=%s  uin1_inf=%s  uin2_bool=%s  " \
-                          "uin2_inf=%s  uin3_bool=%s  uin3_inf=%s  \n          " \
-                          "uin4_bool=%s    uin4_inf=%s      uin5_bool=%s  uin5_inf=%s  uin6_bool=%s  uin6_inf=%s  " \
-                          "uin7_bool=%s  uin7_inf=%s" % (show_frame_id, res['wk1_state'],
+                          "out20_bool=%s  out20_inf=%s  ana1_bool=%s    ana1_inf=%s  \n          " \
+                          "ana2_bool=%s   ana2_inf=%s     uin1_bool=%s    uin1_inf=%s    uin2_bool=%s  " \
+                          "  uin2_inf=%s     uin3_bool=%s    uin3_inf=%s  \n          " \
+                          "uin4_bool=%s    uin4_inf=%s      uin5_bool=%s    uin5_inf=%s    uin6_bool=%s    uin6_inf=%s  " \
+                          "   uin7_bool=%s    uin7_inf=%s" % (show_frame_id, res['wk1_state'],
                                                          res['wk2_state'], res['icu1_bool'], res['icu1_inf'],
                                                          res['icu2_bool'], res['icu2_inf'], res['hb1_bool'],
                                                          res['hb1_inf'], res['hb2_bool'], res['hb2_inf'],
