@@ -155,20 +155,20 @@ class CanShow:
     def rev_data(self):
         logger("Listening...")
         db = kvadblib.Dbc(filename=self.dbc_file)
-        # ch = self._set_up_channel()
+        ch = self._set_up_channel()
         for m in db.messages():
             CPO.dbc_id_list.append(m.id)
-        #
-        # while True:
-        #     try:
-        # frame = ch.read(5 * 60 * 1000)
-        frame = Frame(id_=0x080, data=bytearray([0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]), dlc=8)
-        frame.data = (frame.data + bytearray([0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]))[:8]
-        if CPO.receive_thread_run and self.id_is_exist(self.get_source_id(frame.id)):
-            self._op_frame(frame, db)
-            # except Exception as e:
-            #     self._tear_down_channel(ch)
-            #     print(e)
+
+        while True:
+            try:
+                frame = ch.read(5 * 60 * 1000)
+                # frame = Frame(id_=0x080, data=bytearray([0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]), dlc=8)
+                frame.data = (frame.data + bytearray([0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]))[:8]
+                if CPO.receive_thread_run and self.id_is_exist(self.get_source_id(frame.id)):
+                    self._op_frame(frame, db)
+            except Exception as e:
+                self._tear_down_channel(ch)
+                print(e)
 
     def send_data(self):
         logger("send can...")
@@ -425,10 +425,12 @@ class CanShow:
         elif frame_id == 0x80:
             if res is not None:
                 content = "0x%03X wk1_state=%s     wk2_state=%s  icu1_bool=%s    icu1_inf=%s  " \
-                          "   icu2_bool=%s    icu2_inf=%s     hb1_bool=%s     hb1_inf=%s  \n          hb2_bool=%s     " \
+                          "   icu2_bool=%s    icu2_inf=%s     hb1_bool=%s     hb1_inf=%s  \n          " \
+                          "hb2_bool=%s     " \
                           "hb2_inf=%s     hb3_bool=%s     hb3_inf=%s     hb4_bool=%s  " \
                           "   hb4_inf=%s     out5_bool=%s    out5_inf=%s  \n          " \
-                          "out6_bool=%s    out6_inf=%s    out7_bool=%s    out7_inf=%s    out8_bool=%s    out8_inf=%s  " \
+                          "out6_bool=%s    out6_inf=%s    out7_bool=%s    out7_inf=%s    " \
+                          "out8_bool=%s    out8_inf=%s  " \
                           "  out9_bool=%s    out9_inf=%s  \n          out10_bool=%s  out10_inf=%s   out11_bool=%s  " \
                           "out11_inf=%s  out12_bool=%s  out12_inf=%s  out13_bool=%s   out13_inf=%s  \n          " \
                           "out14_bool=%s  out14_inf=%s   out15_bool=%s  out15_inf=%s  " \
@@ -437,36 +439,37 @@ class CanShow:
                           "out20_bool=%s  out20_inf=%s  ana1_bool=%s    ana1_inf=%s  \n          " \
                           "ana2_bool=%s   ana2_inf=%s     uin1_bool=%s    uin1_inf=%s    uin2_bool=%s  " \
                           "  uin2_inf=%s     uin3_bool=%s    uin3_inf=%s  \n          " \
-                          "uin4_bool=%s    uin4_inf=%s      uin5_bool=%s    uin5_inf=%s    uin6_bool=%s    uin6_inf=%s  " \
+                          "uin4_bool=%s    uin4_inf=%s      uin5_bool=%s    uin5_inf=%s    " \
+                          "uin6_bool=%s    uin6_inf=%s  " \
                           "   uin7_bool=%s    uin7_inf=%s" % (show_frame_id, res['wk1_state'],
-                                                         res['wk2_state'], res['icu1_bool'], res['icu1_inf'],
-                                                         res['icu2_bool'], res['icu2_inf'], res['hb1_bool'],
-                                                         res['hb1_inf'], res['hb2_bool'], res['hb2_inf'],
-                                                         res['hb3_bool'], res['hb3_inf'], res['hb4_bool'],
-                                                         res['hb4_inf'], res['out5_bool'], res['out5_inf'],
-                                                         res['out6_bool'], res['out6_inf'], res['out7_bool'],
-                                                         res['out7_inf'], res['out8_bool'], res['out8_inf'],
-                                                         res['out9_bool'], res['out9_inf'], res['out10_bool'],
-                                                         res['out10_inf'], res['out11_bool'],
-                                                         res['out11_inf'],
-                                                         res['out12_bool'], res['out12_inf'],
-                                                         res['out13_bool'],
-                                                         res['out13_inf'], res['out14_bool'],
-                                                         res['out14_inf'],
-                                                         res['out15_bool'], res['out15_inf'],
-                                                         res['out16_bool'],
-                                                         res['out16_inf'], res['out17_bool'],
-                                                         res['out17_inf'],
-                                                         res['out18_bool'], res['out18_inf'],
-                                                         res['out19_bool'],
-                                                         res['out19_inf'], res['out20_bool'],
-                                                         res['out20_inf'],
-                                                         res['ana1_bool'], res['ana1_inf'], res['ana2_bool'],
-                                                         res['ana2_inf'], res['uin1_bool'], res['uin1_inf'],
-                                                         res['uin2_bool'], res['uin2_inf'], res['uin3_bool'],
-                                                         res['uin3_inf'], res['uin4_bool'], res['uin4_inf'],
-                                                         res['uin5_bool'], res['uin5_inf'], res['uin6_bool'],
-                                                         res['uin6_inf'], res['uin7_bool'], res['uin7_inf'],)
+                                                              res['wk2_state'], res['icu1_bool'], res['icu1_inf'],
+                                                              res['icu2_bool'], res['icu2_inf'], res['hb1_bool'],
+                                                              res['hb1_inf'], res['hb2_bool'], res['hb2_inf'],
+                                                              res['hb3_bool'], res['hb3_inf'], res['hb4_bool'],
+                                                              res['hb4_inf'], res['out5_bool'], res['out5_inf'],
+                                                              res['out6_bool'], res['out6_inf'], res['out7_bool'],
+                                                              res['out7_inf'], res['out8_bool'], res['out8_inf'],
+                                                              res['out9_bool'], res['out9_inf'], res['out10_bool'],
+                                                              res['out10_inf'], res['out11_bool'],
+                                                              res['out11_inf'],
+                                                              res['out12_bool'], res['out12_inf'],
+                                                              res['out13_bool'],
+                                                              res['out13_inf'], res['out14_bool'],
+                                                              res['out14_inf'],
+                                                              res['out15_bool'], res['out15_inf'],
+                                                              res['out16_bool'],
+                                                              res['out16_inf'], res['out17_bool'],
+                                                              res['out17_inf'],
+                                                              res['out18_bool'], res['out18_inf'],
+                                                              res['out19_bool'],
+                                                              res['out19_inf'], res['out20_bool'],
+                                                              res['out20_inf'],
+                                                              res['ana1_bool'], res['ana1_inf'], res['ana2_bool'],
+                                                              res['ana2_inf'], res['uin1_bool'], res['uin1_inf'],
+                                                              res['uin2_bool'], res['uin2_inf'], res['uin3_bool'],
+                                                              res['uin3_inf'], res['uin4_bool'], res['uin4_inf'],
+                                                              res['uin5_bool'], res['uin5_inf'], res['uin6_bool'],
+                                                              res['uin6_inf'], res['uin7_bool'], res['uin7_inf'],)
                 logger(content)
                 self.label_7['text'] = content
 
