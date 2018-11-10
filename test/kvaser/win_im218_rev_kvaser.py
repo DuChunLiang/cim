@@ -71,7 +71,7 @@ class CanShow:
         self.label_4 = tk.Label(self.root, text="0x380")
         self.label_5 = tk.Label(self.root, text="0x100")
         self.label_6 = tk.Label(self.root, text="0x400")
-        self.label_7 = tk.Label(self.root, text="0x080", wraplength=500, justify='left')
+        self.label_7 = tk.Label(self.root, text="0x080", wraplength=800, justify='left')
         self.label_8 = tk.Label(self.root, text="0x180")
 
         self.add_label()
@@ -155,19 +155,20 @@ class CanShow:
     def rev_data(self):
         logger("Listening...")
         db = kvadblib.Dbc(filename=self.dbc_file)
-        ch = self._set_up_channel()
+        # ch = self._set_up_channel()
         for m in db.messages():
             CPO.dbc_id_list.append(m.id)
-
-        while True:
-            try:
-                frame = ch.read(5 * 60 * 1000)
-                frame.data = (frame.data + bytearray([0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]))[:8]
-                if CPO.receive_thread_run and self.id_is_exist(self.get_source_id(frame.id)):
-                    self._op_frame(frame, db)
-            except Exception as e:
-                self._tear_down_channel(ch)
-                print(e)
+        #
+        # while True:
+        #     try:
+        # frame = ch.read(5 * 60 * 1000)
+        frame = Frame(id_=0x080, data=bytearray([0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]), dlc=8)
+        frame.data = (frame.data + bytearray([0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]))[:8]
+        if CPO.receive_thread_run and self.id_is_exist(self.get_source_id(frame.id)):
+            self._op_frame(frame, db)
+            # except Exception as e:
+            #     self._tear_down_channel(ch)
+            #     print(e)
 
     def send_data(self):
         logger("send can...")
@@ -215,7 +216,7 @@ class CanShow:
     def get_signal_dict(bmsg):
         signal_dict = {}
         for bsig in bmsg:
-            signal_dict[bsig.name] = bsig.value
+            signal_dict[bsig.name] = int(bsig.value)
         return signal_dict
 
     def _op_frame(self, frame, db):
@@ -309,13 +310,13 @@ class CanShow:
 
                 pack_data = ""
                 if ch1_id > 0:
-                    pack_data += "{id:%s value:%s}" % (ch1_id, ch1_value)
+                    pack_data += "{%s %s}" % (ch1_id, ch1_value)
                 if ch2_id > 0:
-                    pack_data += "{id:%s value:%s}" % (ch2_id, ch2_value)
+                    pack_data += "{%s %s}" % (ch2_id, ch2_value)
                 if ch3_id > 0:
-                    pack_data += "{id:%s value:%s}" % (ch3_id, ch3_value)
+                    pack_data += "{%s %s}" % (ch3_id, ch3_value)
                 if ch4_id > 0:
-                    pack_data += "{id:%s value:%s}" % (ch4_id, ch4_value)
+                    pack_data += "{%s %s}" % (ch4_id, ch4_value)
 
                 if len(CPO.multiple_id_180) == 0:
                     self.create_multiple_id(ch1_id, frame_id)
@@ -343,9 +344,9 @@ class CanShow:
 
                 pack_data = ""
                 if ledi_ch1_id > 0:
-                    pack_data += "{id:%s current:%s voltage:%s}" % (ledi_ch1_id, ledi_ch1_current, ledi_ch1_voltage)
+                    pack_data += "{%02s %02s %02s}" % (ledi_ch1_id, ledi_ch1_current, ledi_ch1_voltage)
                 if ledi_ch2_id > 0:
-                    pack_data += "{id:%s current:%s voltage:%s}" % (ledi_ch2_id, ledi_ch2_current, ledi_ch2_voltage)
+                    pack_data += "{%02s %02s %02s}" % (ledi_ch2_id, ledi_ch2_current, ledi_ch2_voltage)
 
                 if len(CPO.multiple_id_300) == 0:
                     self.create_multiple_id(ledi_ch1_id, frame_id)
@@ -423,20 +424,21 @@ class CanShow:
                 self.label_6['text'] = content
         elif frame_id == 0x80:
             if res is not None:
-                content = "0x%03X wk1_state=%s, wk2_state=%s, icu1_bool=%s, icu1_inf=%s," \
-                          "icu2_bool=%s, icu2_inf=%s, hb1_bool=%s, " \
-                          "hb1_inf=%s, hb2_bool=%s, hb2_inf=%s, hb3_bool=%s, " \
-                          "hb3_inf=%s, hb4_bool=%s, hb4_inf=%s, out5_bool=%s, out5_inf=%s, " \
-                          "out6_bool=%s, out6_inf=%s, out7_bool=%s, out7_inf=%s, out8_bool=%s, out8_inf=%s, " \
-                          "out9_bool=%s, out9_inf=%s, out10_bool=%s, out10_inf=%s, out11_bool=%s, " \
-                          "out11_inf=%s, out12_bool=%s, out12_inf=%s, out13_bool=%s, out13_inf=%s, " \
-                          "out14_bool=%s, out14_inf=%s, out15_bool=%s, out15_inf=%s, " \
-                          "out16_bool=%s, out16_inf=%s, out17_bool=%s, out17_inf=%s, " \
-                          "out18_bool=%s, out18_inf=%s, out19_bool=%s, out19_inf=%s, " \
-                          "out20_bool=%s, out20_inf=%s, ana1_bool=%s, ana1_inf=%s, ana2_bool=%s, ana2_inf=%s," \
-                          "uin1_bool=%s, uin1_inf=%s, uin2_bool=%s, uin2_inf=%s, uin3_bool=%s, uin3_inf=%s, " \
-                          "uin4_bool=%s, uin4_inf=%s, uin5_bool=%s, uin5_inf=%s, uin6_bool=%s, uin6_inf=%s, " \
-                          "uin7_bool=%s, uin7_inf=%s" % (show_frame_id, res['wk1_state'],
+                content = "0x%03X wk1_state=%s     wk2_state=%s  icu1_bool=%s  icu1_inf=%s  " \
+                          "icu2_bool=%s  icu2_inf=%s hb1_bool=%s  hb1_inf=%s  \n          hb2_bool=%s     " \
+                          "hb2_inf=%s      hb3_bool=%s  hb3_inf=%s  hb4_bool=%s  " \
+                          "hb4_inf=%s  out5_bool=%s  out5_inf=%s  \n          " \
+                          "out6_bool=%s    out6_inf=%s     out7_bool=%s  out7_inf=%s  out8_bool=%s  out8_inf=%s  " \
+                          "out9_bool=%s  out9_inf=%s  \n          out10_bool=%s  out10_inf=%s   out11_bool=%s  " \
+                          "out11_inf=%s  out12_bool=%s  out12_inf=%s  out13_bool=%s  out13_inf=%s  \n          " \
+                          "out14_bool=%s  out14_inf=%s   out15_bool=%s  out15_inf=%s  " \
+                          "out16_bool=%s  out16_inf=%s  out17_bool=%s  out17_inf=%s  \n          " \
+                          "out18_bool=%s  out18_inf=%s   out19_bool=%s  out19_inf=%s  " \
+                          "out20_bool=%s  out20_inf=%s  ana1_bool=%s  ana1_inf=%s  \n          " \
+                          "ana2_bool=%s   ana2_inf=%s     uin1_bool=%s  uin1_inf=%s  uin2_bool=%s  " \
+                          "uin2_inf=%s  uin3_bool=%s  uin3_inf=%s  \n          " \
+                          "uin4_bool=%s    uin4_inf=%s      uin5_bool=%s  uin5_inf=%s  uin6_bool=%s  uin6_inf=%s  " \
+                          "uin7_bool=%s  uin7_inf=%s" % (show_frame_id, res['wk1_state'],
                                                          res['wk2_state'], res['icu1_bool'], res['icu1_inf'],
                                                          res['icu2_bool'], res['icu2_inf'], res['hb1_bool'],
                                                          res['hb1_inf'], res['hb2_bool'], res['hb2_inf'],

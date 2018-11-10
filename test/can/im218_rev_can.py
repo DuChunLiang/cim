@@ -168,9 +168,9 @@ class Analysis:
 
                         pack_data = ""
                         if ledi_ch1_id > 0:
-                            pack_data += "{id:%s current:%s voltage:%s}" % (ledi_ch1_id, ledi_ch1_current, ledi_ch1_voltage)
+                            pack_data += "{%02s %02s %02s}" % (ledi_ch1_current, ledi_ch1_id, ledi_ch1_voltage)
                         if ledi_ch2_id > 0:
-                            pack_data += "{id:%s current:%s voltage:%s}" % (ledi_ch2_id, ledi_ch2_current, ledi_ch2_voltage)
+                            pack_data += "{%02s %02s %02s}" % (ledi_ch2_current, ledi_ch2_id, ledi_ch2_voltage)
 
                         if len(CPO.multiple_id_300) == 0:
                             self.create_multiple_id(ledi_ch1_id, frame_id)
