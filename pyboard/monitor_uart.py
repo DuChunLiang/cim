@@ -11,12 +11,14 @@ class CPO:
     is_debug = 0
     temp_data = None
     repeat_count = 0
+    restart_count = 0
     max_repeat_count = 10
-    power_gpio = "X17"
-    close_gpio = "X18"
+    power_gpio = "X18"
+    close_gpio = "X17"
     run_millis = 0
+    startup_millis = 0
     #              年  月 日 星期 时  分 秒  倒计时
-    init_time = (2018, 11, 7, 3, 9, 41, 0, 0)    # 年 月 日 星期 时 分 秒 倒计时
+    init_time = (2018, 11, 13, 3, 13, 50, 0, 0)    # 年 月 日 星期 时 分 秒 倒计时
 
 
 class MonitorUart:
@@ -67,12 +69,12 @@ class MonitorUart:
             sum += i
         return sum & 0x00ff
 
-    def read_data(self):
-        self.write_log("start read uart")
+    def monitor_card_screen(self):
+        self.write_log("start monitor card screen")
+        self.pin_low(CPO.close_gpio)
+        self.pin_high(CPO.power_gpio)
         while True:
             try:
-                self.pin_low(CPO.close_gpio)
-                self.pin_high(CPO.power_gpio)
                 if self.uart.any() > 0:
                     CPO.run_millis = pyb.millis()
                     rev = self.uart.readline()
@@ -110,4 +112,52 @@ class MonitorUart:
             except Exception as e:
                 self.write_log("Error: %s" % e)
 
+    def monitor_restart(self):
+        self.write_log("start monitor restart")
+        self.pin_high(CPO.power_gpio)
+        self.pin_low(CPO.close_gpio)
+        while True:
+            try:
+                if self.uart.any() > 0:
+                    rev = self.uart.readline()
+                    if len(rev) == 15:
+                        # head = rev[12:]
+                        # checkout_bit = head[0]
+                        # type = head[1]
+                        # data_len = head[2]
+                        data = rev[:10]
+                        check_sum = rev[10]
 
+                        if self.get_check_sum(data) == check_sum:
+                            restart_len_time = pyb.millis() - CPO.run_millis
+                            if restart_len_time > 6 * 1000:
+                                self.write_log("warning: restart time too long %s秒" % str(restart_len_time/1000))
+
+                            self.uart.read(self.uart.any())
+                            pyb.delay(10000)
+                            self.pin_low(CPO.power_gpio)
+                            pyb.delay(1000)
+                            self.pin_high(CPO.power_gpio)
+                            CPO.run_millis = pyb.millis()
+
+                            CPO.restart_count += 1
+                            f = open("restart_count.log", "w")
+                            f.write(str(CPO.restart_count))
+                            f.close()
+                else:
+                    restart_len_time = pyb.millis() - CPO.run_millis
+                    if restart_len_time > 7.5 * 1000:
+                        self.write_log("error: restart fail")
+                        pyb.delay(3000)
+                        self.pin_low(CPO.power_gpio)
+                        pyb.delay(1000)
+                        self.pin_high(CPO.power_gpio)
+                        CPO.run_millis = pyb.millis()
+
+                        CPO.restart_count += 1
+                        f = open("restart_count.log", "w")
+                        f.write(str(CPO.restart_count))
+                        f.close()
+
+            except Exception as e:
+                self.write_log("Error: %s" % e)

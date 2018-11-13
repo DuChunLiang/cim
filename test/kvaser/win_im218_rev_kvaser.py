@@ -408,17 +408,17 @@ class CanShow:
             if res is not None:
                 sens1_inf = int(res['sens1_inf'])
                 sens2_inf = int(res['sens2_inf'])
-                wiper_Fail = int(res['wiper_fail'])
+                wiper_fail = int(res['wiper_fail'])
                 oilavl = int(res['oilavl'])
-                Vbat_inf = int(res['vbat_inf'])
-                V1_inf = int(res['v1_inf'])
-                V2_inf = int(res['v2_inf'])
+                vbat_inf = int(res['vbat_inf'])
+                v1_inf = int(res['v1_inf'])
+                v2_inf = int(res['v2_inf'])
 
                 content = "0x%03X sens1_inf=%s, sens1_inf=%s, " \
                           "sens1_inf=%s, sens1_inf=%s, " \
                           "sens1_inf=%s, sens1_inf=%s, " \
-                          "sens1_inf=%s" % (show_frame_id, sens1_inf, sens2_inf, wiper_Fail,
-                                            oilavl, Vbat_inf, V1_inf, V2_inf)
+                          "sens1_inf=%s" % (show_frame_id, sens1_inf, sens2_inf, wiper_fail,
+                                            oilavl, vbat_inf, v1_inf, v2_inf)
 
                 logger(content)
                 self.label_6['text'] = content

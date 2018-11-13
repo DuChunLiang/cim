@@ -26,8 +26,11 @@ class CPO:
     interval_dict = {}
     start_time = time.time()
     check_time = 5
+    reset_time = time.time()
     is_reset = False
+    reset_op = True
     is_shutdown = False
+    is_record_frame = False
     error_log_path = "./log/error.log"
     interval_log_path = "./log/interval.log"
 
@@ -71,16 +74,22 @@ class Monitor:
                 frame_id = bo.arbitration_id
                 timestamp = bo.timestamp
                 data = bo.data
+                logger(frame_id)
                 # 判断是否有重启或复位
-                if frame_id == 0x001:
-                    if not CPO.is_reset:
-                        logger("system restart\r\n", True, CPO.error_log_path)
+                if frame_id == 0x001 or frame_id == 0x0cda01f1 or frame_id == 0x040:
+                    if time.time() - CPO.reset_time > 5:
+                        logger("system restart not active...\r\n", True, CPO.error_log_path)
                         CPO.is_reset = True
+                        CPO.reset_time = time.time()
                 else:
                     if CPO.is_shutdown:
                         CPO.is_shutdown = False
 
                     if len(CPO.frame_id_dict) == 0:
+                        if not CPO.is_record_frame:
+                            CPO.start_time = time.time()
+                            CPO.is_record_frame = True
+
                         self.record_frame(frame_id)
                         if self.record_count == 0:
                             logger("Initializing frame information, Wait 5 seconds...")
