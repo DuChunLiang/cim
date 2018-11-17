@@ -10,11 +10,13 @@ import binascii
 
 # 日志打印信息
 def logger(content):
-    now_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-    print('%s - %s' % (now_date, content))
+    if CPO.debug:
+        now_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+        print('%s - %s' % (now_date, content))
 
 
 class CPO:
+    debug = 0
     dbc_id_list = []  # dbc信息存储 用于判断id是否存在
     multiple_list = []
     multiple_count = 0
@@ -32,7 +34,8 @@ class CPO:
 class Analysis:
 
     def __init__(self):
-        pass
+        # 加载dbc文件
+        self.db = cantools.database.load_file('dbc/IM218.dbc')
 
     def log(self, content, timestamp):
         print(content)
@@ -51,13 +54,20 @@ class Analysis:
     def assembly_data(self, data):
         return [hex(c) for c in data]
 
+    # 获取信号的值范围
+    def get_signal_val_range(self, source_frame_id, signal_name):
+        msg = self.db.get_message_by_frame_id(source_frame_id)
+        signal = msg.get_signal_by_name(signal_name)
+
+        return tuple([signal.minimum, signal.maximum])
+
     # 根据报文数据检测生成此报文的所有关联ID
     def create_multiple_id(self, multiple_id, frame_id):
         if multiple_id not in CPO.multiple_list:
             CPO.multiple_list.append(multiple_id)
         else:
             CPO.multiple_count += 1
-            if CPO.multiple_count >= 3:
+            if CPO.multiple_count >= 10:
                 if frame_id == 0x300:
                     CPO.multiple_id_300 = CPO.multiple_list.copy()
                 elif frame_id == 0x380:
@@ -66,15 +76,12 @@ class Analysis:
                 CPO.multiple_list = []
                 CPO.multiple_count = 0
 
-
     # 解析can消息
     def analysis_can(self):
         logger("已启动can数据解析")
 
-        # 加载dbc文件
-        db = cantools.database.load_file('./dbc/IM218.dbc')
         # 存入dbc文件中所有id 用于判断传入id在dbc中是否存在
-        for m in db.messages:
+        for m in self.db.messages:
             CPO.dbc_id_list.append(m.frame_id)
 
         can.rc['interface'] = 'socketcan'
@@ -99,7 +106,7 @@ class Analysis:
                     if frame_id == 0x280:
                         ifreq_index = 2
 
-                    res = db.decode_message(frame_id, data)
+                    res = self.db.decode_message(frame_id, data)
                     if res is not None:
                         ton_toff_0 = int(res['ifreq%s_ton_toff_1' % ifreq_index])
                         ton_toff_1 = int(res['ifreq%s_ton_toff_2' % ifreq_index])
@@ -120,7 +127,7 @@ class Analysis:
                         content = "%s ton=%s, toff=%s" % (hex(bo.arbitration_id), str(ton), str(toff))
                         self.log(content, bo.timestamp)
                 elif frame_id == 0x180:
-                    res = db.decode_message(frame_id, data)
+                    res = self.db.decode_message(frame_id, data)
                     if res is not None:
                         ch1_id = int(res['ch1_id'])
                         ch1_value = int(res['ch1_value'])
@@ -157,8 +164,11 @@ class Analysis:
                                 self.log(content, bo.timestamp)
 
                 elif frame_id == 0x300:
-                    res = db.decode_message(frame_id, data)
+                    res = self.db.decode_message(frame_id, data)
                     if res is not None:
+                        val_range = self.get_signal_val_range(frame_id, "ledi_ch1_current")
+                        print('--', val_range)
+
                         ledi_ch1_current = int(res['ledi_ch1_current'])
                         ledi_ch1_id = int(res['ledi_ch1_id'])
                         ledi_ch1_voltage = int(res['ledi_ch1_voltage'])
@@ -168,9 +178,9 @@ class Analysis:
 
                         pack_data = ""
                         if ledi_ch1_id > 0:
-                            pack_data += "{%02s %02s %02s}" % (ledi_ch1_current, ledi_ch1_id, ledi_ch1_voltage)
+                            pack_data += "{%s %s %s}" % (ledi_ch1_id, ledi_ch1_current, ledi_ch1_voltage)
                         if ledi_ch2_id > 0:
-                            pack_data += "{%02s %02s %02s}" % (ledi_ch2_current, ledi_ch2_id, ledi_ch2_voltage)
+                            pack_data += "{%s %s %s}" % (ledi_ch2_id, ledi_ch2_current, ledi_ch2_voltage)
 
                         if len(CPO.multiple_id_300) == 0:
                             self.create_multiple_id(ledi_ch1_id, frame_id)
@@ -188,7 +198,7 @@ class Analysis:
                                 self.log(content, bo.timestamp)
 
                 elif frame_id == 0x380:
-                    res = db.decode_message(frame_id, data)
+                    res = self.db.decode_message(frame_id, data)
                     if res is not None:
                         out_ch1_id = int(res['out_ch1_id'])
                         out_ch2_id = int(res['out_ch2_id'])
@@ -196,8 +206,6 @@ class Analysis:
                         out_ch1_value = int(res['out_ch1_value'])
                         out_ch2_value = int(res['out_ch2_value'])
                         out_ch3_value = int(res['out_ch3_value'])
-
-                        print(CPO.multiple_id_380, CPO.multiple_list, CPO.multiple_count, out_ch1_id)
 
                         if len(CPO.multiple_id_380) == 0:
                             self.create_multiple_id(out_ch1_id, frame_id)
@@ -222,7 +230,10 @@ class Analysis:
                                 self.log(content, bo.timestamp)
 
                 elif frame_id == 0x100:
-                    res = db.decode_message(frame_id, data)
+                    res = self.db.decode_message(frame_id, data)
+                    print(res)
+                    for r in dict(res).items():
+                        print(r)
                     if res is not None:
                         ana1 = int(res['ana1'])
                         ana2 = int(res['ana2'])
@@ -231,7 +242,7 @@ class Analysis:
                         self.log(content, bo.timestamp)
 
                 elif frame_id == 0x400:
-                    res = db.decode_message(frame_id, data)
+                    res = self.db.decode_message(frame_id, data)
                     if res is not None:
                         sens1_inf = int(res['sens1_inf'])
                         sens2_inf = int(res['sens2_inf'])
@@ -249,7 +260,7 @@ class Analysis:
 
                         self.log(content, bo.timestamp)
                 elif frame_id == 0x80:
-                    res = db.decode_message(frame_id, data)
+                    res = self.db.decode_message(frame_id, data)
                     if res is not None:
                         content = "0x%03X wk1_state=%s, wk2_state=%s, icu1_bool=%s, icu1_inf=%s," \
                                   "icu2_bool=%s, icu2_inf=%s, hb1_bool=%s, " \

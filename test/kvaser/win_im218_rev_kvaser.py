@@ -254,7 +254,7 @@ class CanShow:
             CPO.multiple_list.append(multiple_id)
         else:
             CPO.multiple_count += 1
-            if CPO.multiple_count >= 3:
+            if CPO.multiple_count >= 10:
                 if frame_id == 0x300:
                     CPO.multiple_id_300 = CPO.multiple_list.copy()
                 elif frame_id == 0x380:

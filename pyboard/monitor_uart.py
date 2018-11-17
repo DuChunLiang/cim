@@ -18,7 +18,7 @@ class CPO:
     run_millis = 0
     startup_millis = 0
     #              年  月 日 星期 时  分 秒  倒计时
-    init_time = (2018, 11, 13, 3, 13, 50, 0, 0)    # 年 月 日 星期 时 分 秒 倒计时
+    init_time = (2018, 11, 15, 3, 10, 35, 0, 0)    # 年 月 日 星期 时 分 秒 倒计时
 
 
 class MonitorUart:
@@ -118,6 +118,7 @@ class MonitorUart:
         self.pin_low(CPO.close_gpio)
         while True:
             try:
+                print(self.uart.any())
                 if self.uart.any() > 0:
                     rev = self.uart.readline()
                     if len(rev) == 15:

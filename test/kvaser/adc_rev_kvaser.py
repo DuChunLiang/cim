@@ -39,7 +39,7 @@ class CPO:
 
 class KvaserCan:
     def __init__(self):
-        self.dbc_file = "../dbc/adc_lc.dbc"
+        self.dbc_file = "../../dbc/adc_lc.dbc"
 
     @staticmethod
     def _set_up_channel(channel=0, open_flags=canlib.Open.ACCEPT_VIRTUAL,
