@@ -111,4 +111,11 @@ import random
 # a = b'\x01\x00\x00\x00\x01\x13a\x00\x00\x00v\r~\x10\n'
 # b = b'~\x10\n\x01\x00\x00\x00\x00\x10\xe4\x10\x00\x00\x05\r'
 
-
+restart_count = 0
+f = open(r"D:\lrzsz\restart_count.log", "r")
+count = f.readline()
+if count is not None and len(count) > 0:
+    restart_count = int(count)
+    print('--', len(count))
+print(restart_count)
+f.close()

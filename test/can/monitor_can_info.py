@@ -12,7 +12,7 @@ import binascii
 def logger(content, is_file=False, path="./log/log.log"):
     now_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
     log_data = '%s - %s' % (now_date, content)
-    # print(log_data)
+    print(log_data)
 
     if is_file:
         log_file = open(path, "a")
@@ -55,6 +55,9 @@ class Monitor:
         self.dbc_path = "dbc/IM218.dbc"
         # 加载dbc文件
         self.db = cantools.database.load_file(self.dbc_path)
+        # 存入dbc文件中所有id 用于判断传入id在dbc中是否存在
+        for m in self.db.messages:
+            CPO.dbc_id_list.append(m.frame_id)
 
     # 去掉id的地址信息
     @staticmethod
@@ -111,10 +114,6 @@ class Monitor:
     def analysis_can(self):
         logger("start can monitor...\r\n", True, CPO.error_log_path)
 
-        # 存入dbc文件中所有id 用于判断传入id在dbc中是否存在
-        for m in self.db.messages:
-            CPO.dbc_id_list.append(m.frame_id)
-
         can.rc['interface'] = 'socketcan'
         can.rc['channel'] = self.channel
         can_bus = can.interface.Bus()
@@ -127,10 +126,7 @@ class Monitor:
                     CPO.is_shutdown = True
             else:
                 frame_id = bo.arbitration_id
-                source_frame_id = self.get_source_id(frame_id)
-                timestamp = bo.timestamp
-                data = (bo.data + bytearray([0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]))[:8]
-
+                
                 # 判断是否有重启或复位
                 if frame_id == 0x001 or frame_id == 0x0cda01f1 or frame_id == 0x040:
                     if time.time() - CPO.reset_time > 5:
@@ -151,15 +147,20 @@ class Monitor:
                         logger("Initializing frame information, Wait 5 seconds...")
                         self.record_count = 1
                 else:
+                    source_frame_id = self.get_source_id(frame_id)
+                    timestamp = bo.timestamp
+                    data = (bo.data + bytearray([0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]))[:8]
+
                     # 判断是否更换了硬件设备 发送不同的报文
                     if frame_id in CPO.frame_id_dict:
                         frame_dict = CPO.frame_id_dict[frame_id]
 
-                        # 数据变更和变更范围监控
-                        self.frame_data_change(frame_id, data, frame_dict[2])
                         if CPO.is_reset:
                             CPO.is_reset = False
                             logger("system restart successfully\r\n", True, CPO.error_log_path)
+
+                        # 数据变更和变更范围监控
+                        self.frame_data_change(frame_id, data, frame_dict[2])
 
                         # 添加复用帧识别ID
                         if source_frame_id in CPO.multiplex_frame:
@@ -176,7 +177,7 @@ class Monitor:
                         frame_dict[0] = timestamp
                         frame_dict[1] = interval
 
-                        # 第一次计算价格时间不准，过滤掉
+                        # 第一次计算间隔时间不准，过滤掉
                         if interval < 60 * 10000:
                             key = "%s_%s" % (frame_id, interval)
 
@@ -221,63 +222,65 @@ class Monitor:
     def frame_data_change(self, frame_id, data, source_mark_id):
         hex_str_data = self.get_hex_str(data)
         source_frame_id = self.get_source_id(frame_id)
-        # 判断是不是监控值变化，否则是监控值范围
-        if source_frame_id in CPO.change_frame:
-            # 判断是否已经存入上次数据的记录字典
-            if frame_id not in CPO.last_frame_dict:
-                CPO.last_frame_dict[frame_id] = "00"
-            else:
-                original = CPO.last_frame_dict[frame_id]
-                if source_frame_id in CPO.multiplex_frame:
-                    if source_mark_id != 0:
-                        res = self.db.decode_message(source_frame_id, data)
-                        mark_id = self.get_frame_mark_id(res, source_frame_id)
-                        if mark_id == source_mark_id:
-                            if frame_id in CPO.multiplex_frame_record_dict:
-                                now_data = CPO.multiplex_frame_record_dict[frame_id]
-                                # 判断数据组合是否已经稳定
-                                if len(original) == len(now_data):
-                                    # 判断数据是否变化
-                                    if original != now_data:
-                                        content = "frame data change 0x%03X original:%s change:%s\r\n" \
-                                                  % (frame_id, original, now_data)
-                                        logger(content, True, CPO.error_log_path)
-
-                                CPO.last_frame_dict[frame_id] = CPO.multiplex_frame_record_dict[frame_id]
-                                CPO.multiplex_frame_record_dict[frame_id] = hex_str_data
-                        else:
-                            if frame_id in CPO.multiplex_frame_record_dict:
-                                CPO.multiplex_frame_record_dict[frame_id] += hex_str_data
-                            else:
-                                CPO.multiplex_frame_record_dict[frame_id] = hex_str_data
-
+        # 判断是否在dbc文件内
+        if source_frame_id in CPO.dbc_id_list:
+            # 判断是不是监控值变化，否则是监控值范围
+            if source_frame_id in CPO.change_frame:
+                # 判断是否已经存入上次数据的记录字典
+                if frame_id not in CPO.last_frame_dict:
+                    CPO.last_frame_dict[frame_id] = "00"
                 else:
-                    # 判断数据组合是否已经稳定
-                    if len(original) == len(hex_str_data):
-                        # 判断数据是否变化
-                        if original != hex_str_data:
-                            content = "frame data change 0x%03X original:%s change:%s\r\n" % (frame_id, original,
-                                                                                              hex_str_data)
-                            logger(content, True, CPO.error_log_path)
-                    CPO.last_frame_dict[frame_id] = hex_str_data
+                    original = CPO.last_frame_dict[frame_id]
+                    if source_frame_id in CPO.multiplex_frame:
+                        if source_mark_id != 0:
+                            res = self.db.decode_message(source_frame_id, data)
+                            mark_id = self.get_frame_mark_id(res, source_frame_id)
+                            if mark_id == source_mark_id:
+                                if frame_id in CPO.multiplex_frame_record_dict:
+                                    now_data = CPO.multiplex_frame_record_dict[frame_id]
+                                    # 判断数据组合是否已经稳定
+                                    if len(original) == len(now_data):
+                                        # 判断数据是否变化
+                                        if original != now_data:
+                                            content = "frame data change 0x%03X original:%s change:%s\r\n" \
+                                                      % (frame_id, original, now_data)
+                                            logger(content, True, CPO.error_log_path)
 
-        else:
-            # 根据dbc文件的设定信号的值范围判断获取的值是否超限
-            res = self.db.decode_message(source_frame_id, data)
-            if res is not None:
-                for r in dict(res).items():
-                    signal_name = r[0]
-                    signal_val = int(r[1])
-                    signal_range = self.get_signal_val_range(source_frame_id, signal_name)
-                    s_min = signal_range[0]
-                    s_max = signal_range[1]
-                    if signal_val < s_min or signal_val > s_max:
-                        content = "value out of bounds 0x%03X [%s|%s] %s:%s data:%s\r\n" % (frame_id,
-                                                                                            s_min, s_max,
-                                                                                            signal_name,
-                                                                                            signal_val,
-                                                                                            hex_str_data)
-                        logger(content, True, CPO.error_log_path)
+                                    CPO.last_frame_dict[frame_id] = CPO.multiplex_frame_record_dict[frame_id]
+                                    CPO.multiplex_frame_record_dict[frame_id] = hex_str_data
+                            else:
+                                if frame_id in CPO.multiplex_frame_record_dict:
+                                    CPO.multiplex_frame_record_dict[frame_id] += hex_str_data
+                                else:
+                                    CPO.multiplex_frame_record_dict[frame_id] = hex_str_data
+
+                    else:
+                        # 判断数据组合是否已经稳定
+                        if len(original) == len(hex_str_data):
+                            # 判断数据是否变化
+                            if original != hex_str_data:
+                                content = "frame data change 0x%03X original:%s change:%s\r\n" % (frame_id, original,
+                                                                                                  hex_str_data)
+                                logger(content, True, CPO.error_log_path)
+                        CPO.last_frame_dict[frame_id] = hex_str_data
+
+            else:
+                # 根据dbc文件的设定信号的值范围判断获取的值是否超限
+                res = self.db.decode_message(source_frame_id, data)
+                if res is not None:
+                    for r in dict(res).items():
+                        signal_name = r[0]
+                        signal_val = int(r[1])
+                        signal_range = self.get_signal_val_range(source_frame_id, signal_name)
+                        s_min = signal_range[0]
+                        s_max = signal_range[1]
+                        if signal_val < s_min or signal_val > s_max:
+                            content = "value out of bounds 0x%03X [%s|%s] %s:%s data:%s\r\n" % (frame_id,
+                                                                                                s_min, s_max,
+                                                                                                signal_name,
+                                                                                                signal_val,
+                                                                                                hex_str_data)
+                            logger(content, True, CPO.error_log_path)
 
 
 if __name__ == "__main__":
@@ -285,3 +288,11 @@ if __name__ == "__main__":
         Monitor(sys.argv[1]).analysis_can()
     else:
         logger("Please set can channel")
+
+    # Monitor.get_source_id(121212)
+    # s_id = 12123336
+    # print(hex(s_id), hex(s_id & 0xF0))
+    # d = bytearray.fromhex("%04X" % s_id)
+    # print(d)
+    # d[1] = d[1] & 0xF0
+    # print(int(binascii.b2a_hex(d), 16))

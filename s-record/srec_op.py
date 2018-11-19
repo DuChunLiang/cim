@@ -114,14 +114,27 @@ class Srec:
             bin_file.close()
             print("generate srec success -> '%s'" % out_path)
 
+    def compute_crc(self):
+        f = bincopy.BinFile()
+        f.add_srec_file("D:\lrzsz\IC216.mhx")
+        f.fill(value=b'\xff')
+        # min = f.minimum_address
+        # max = f.maximum_address
+        # print(f.as_binary(minimum_address=f.minimum_address, maximum_address=f.maximum_address))
+        print("%08X" % binascii.crc32(f.as_binary()))
+
+
+
+
 
 s = Srec()
-s.generate_srec(type=2, bin_start=0x100, read_length=1024*35, address_start=0x80000)
-s.generate_srec(type=2, bin_start=0x200, read_length=1024*53, address_start=0x80000)
-s.generate_srec(type=2, bin_start=0x300, read_length=1024*77, address_start=0xC0000)
-s.generate_srec(type=2, bin_start=0x400, read_length=1024*320, address_start=0x170000)
-s.generate_srec(type=2, bin_start=0x500, read_length=1024*58, address_start=0x1C0000)
-s.generate_srec(type=2, bin_start=0x600, read_length=1024*22, address_start=0x200000)
+s.compute_crc()
+# s.generate_srec(type=2, bin_start=0x100, read_length=1024*35, address_start=0x80000)
+# s.generate_srec(type=2, bin_start=0x200, read_length=1024*53, address_start=0x80000)
+# s.generate_srec(type=2, bin_start=0x400, read_length=1024*320, address_start=0x170000)
+# # s.generate_srec(type=2, bin_start=0x500, read_length=1024*58, address_start=0e=2, bin_start=0x300, read_length=1024*77, address_start=0xC0000)
+# s.generate_srec(typx1C0000)
+# s.generate_srec(type=2, bin_start=0x600, read_length=1024*22, address_start=0x200000)
 
 
 # data_list = [{'bin_start': 100, 'read_length': 0x04000, 'address_start': 0x00004000},

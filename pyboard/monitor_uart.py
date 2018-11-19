@@ -19,6 +19,7 @@ class CPO:
     startup_millis = 0
     #              年  月 日 星期 时  分 秒  倒计时
     init_time = (2018, 11, 15, 3, 10, 35, 0, 0)    # 年 月 日 星期 时 分 秒 倒计时
+    restart_log_path = "restart_count.log"
 
 
 class MonitorUart:
@@ -28,6 +29,15 @@ class MonitorUart:
         self.rtc = RTC()
         self.rtc.datetime(CPO.init_time)
         self.write_log("init uart successfully")
+        self.init_restart_count()
+
+    @staticmethod
+    def init_restart_count():
+        f = open(CPO.restart_log_path, "r")
+        count = f.readline()
+        if count is not None and len(count) > 0:
+            CPO.restart_count = int(count)
+        f.close()
 
     def write_log(self, content=""):
         if CPO.is_debug:
@@ -156,7 +166,7 @@ class MonitorUart:
                         CPO.run_millis = pyb.millis()
 
                         CPO.restart_count += 1
-                        f = open("restart_count.log", "w")
+                        f = open(CPO.restart_log_path, "w")
                         f.write(str(CPO.restart_count))
                         f.close()
 
