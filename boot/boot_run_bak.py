@@ -98,6 +98,7 @@ class BootRecord:
         self.label_serial_code.place(x=150, y=120, anchor=anchor)
 
         self.scrollbar.place(x=590, y=128, height=400, anchor=anchor)
+        self.scrollbar.config(command=self.boot_list.yview)
         self.boot_list.config(yscrollcommand=self.scrollbar.set)
         self.boot_list.place(x=576, y=128, height=400, anchor=anchor)
 

@@ -19,7 +19,7 @@ log_path = r"D:\lrzsz\boot.log"
 def logger(content):
     now_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
     content = '%s - %s' % (now_date, content)
-    print(content)
+    # print(content)
     log_f = open(log_path, "a")
     log_f.write(content)
     log_f.close()
@@ -98,7 +98,7 @@ class BootRecord:
         self.label_serial_code.place(x=150, y=120, anchor=anchor)
 
         self.scrollbar.place(x=590, y=128, height=400, anchor=anchor)
-        self.scrollbar.config(yscrollcommand=self.boot_list.yview_moveto)
+        self.scrollbar.config(command=self.boot_list.yview)
         self.boot_list.config(yscrollcommand=self.scrollbar.set)
         self.boot_list.place(x=576, y=128, height=400, anchor=anchor)
 
@@ -123,12 +123,12 @@ class BootRecord:
         if run_res:
             self.success_count += 1
             res = "SUCCESS"
-            print("success")
+            # print("success")
         else:
             item_bg = "red"
             self.error_count += 1
             res = "ERROR"
-            print("error")
+            # print("error")
 
         # 添加日志
         logger("%s          %s\r\n" % (self.serial_code, res))
@@ -140,7 +140,8 @@ class BootRecord:
         self.boot_list.itemconfigure(self.list_index, fg=item_bg)
 
         self.boot_list.yview_moveto(self.list_index)
-
+        self.scrollbar.activate(self.list_index)
+        print('-----', self.scrollbar.get(), self.list_index)
         self.label_success_val['text'] = self.success_count
         self.label_error_val['text'] = self.error_count
 
