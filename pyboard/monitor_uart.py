@@ -18,7 +18,7 @@ class CPO:
     run_millis = 0
     startup_millis = 0
     #              年  月 日 星期 时  分 秒  倒计时
-    init_time = (2018, 11, 15, 3, 10, 35, 0, 0)    # 年 月 日 星期 时 分 秒 倒计时
+    init_time = (2018, 11, 20, 3, 9, 30, 0, 0)    # 年 月 日 星期 时 分 秒 倒计时
     restart_log_path = "restart_count.log"
 
 
@@ -128,7 +128,7 @@ class MonitorUart:
         self.pin_low(CPO.close_gpio)
         while True:
             try:
-                print(self.uart.any())
+                # print(self.uart.any())
                 if self.uart.any() > 0:
                     rev = self.uart.readline()
                     if len(rev) == 15:
@@ -141,15 +141,18 @@ class MonitorUart:
 
                         if self.get_check_sum(data) == check_sum:
                             restart_len_time = pyb.millis() - CPO.run_millis
+                            # print('--', restart_len_time)
                             if restart_len_time > 6 * 1000:
                                 self.write_log("warning: restart time too long %s秒" % str(restart_len_time/1000))
 
+                            # print(rev)
                             self.uart.read(self.uart.any())
-                            pyb.delay(10000)
+                            pyb.delay(5000)
                             self.pin_low(CPO.power_gpio)
                             pyb.delay(1000)
                             self.pin_high(CPO.power_gpio)
                             CPO.run_millis = pyb.millis()
+                            self.uart.read(self.uart.any())
 
                             CPO.restart_count += 1
                             f = open("restart_count.log", "w")

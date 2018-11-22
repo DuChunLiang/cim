@@ -32,5 +32,5 @@ for line in data:
 	count = count +1
 #	print count
 
-	print out
+	print(out)
 

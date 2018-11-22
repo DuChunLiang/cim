@@ -2,9 +2,9 @@
 # -*- coding:utf-8 -*-
 
 # import cantools
-import struct
-import time
-import random
+# import struct
+# import time
+# import random
 
 
 # from suds.client import Client
@@ -111,11 +111,28 @@ import random
 # a = b'\x01\x00\x00\x00\x01\x13a\x00\x00\x00v\r~\x10\n'
 # b = b'~\x10\n\x01\x00\x00\x00\x00\x10\xe4\x10\x00\x00\x05\r'
 
-restart_count = 0
-f = open(r"D:\lrzsz\restart_count.log", "r")
-count = f.readline()
-if count is not None and len(count) > 0:
-    restart_count = int(count)
-    print('--', len(count))
-print(restart_count)
-f.close()
+# restart_count = 0
+# f = open(r"D:\lrzsz\restart_count.log", "r")
+# count = f.readline()
+# if count is not None and len(count) > 0:
+#     restart_count = int(count)
+#     print('--', len(count))
+# print(restart_count)
+# f.close()
+import subprocess
+
+# res = subprocess.getstatusoutput("D:\lrzsz\BOOT\CanBoot\canbootcli.exe -n IC216_Boot.mhx")
+# res = subprocess.call("D:\lrzsz\BOOT\CanBoot\canbootcli.exe -n D:\lrzsz\BOOT\CanBoot\IC216_Boot.mhx")
+# command = "D:\lrzsz\BOOT\CanBoot\canbootcli.exe -n=1 -q D:\lrzsz\BOOT\CanBoot\IC216_Boot.mhx"
+# res = subprocess.call(command)
+# p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+# lines = []
+# for line in iter(p.stdout.readline, b''):
+#     line = line.rstrip().decode('utf8')
+#     print(">>>", line)
+#     lines.append(line)
+# print(res)
+# print('---', memo)
+print("TIMEOUT" in "6d5sa4f864sadf84 [TIMEOUT]")
+
+
