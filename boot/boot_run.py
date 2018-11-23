@@ -190,7 +190,7 @@ class BootRecord:
         keycode = event.keycode
         key_val = event.char
         if not self.is_run_command:
-            if keycode == 13 and len(self.serial_code) > 0:
+            if keycode == 13 and len(self.serial_code) == 16:
                 if self.file_entry_var.get() is not None and len(self.file_entry_var.get()) > 0:
                     self.text_console.config(state=tk.NORMAL)
                     self.is_run_command = True
