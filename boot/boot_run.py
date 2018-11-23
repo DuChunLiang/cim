@@ -83,7 +83,7 @@ class BootRecord:
         anchor = "ne"
 
         self.root.focus()
-        self.root.bind("<Key>", self.entry_key)
+        self.root.bind("<KeyPress>", self.entry_key)
 
         self.label_time.place(x=150, y=30, anchor=anchor)
         self.label_time_value.place(x=230, y=31, anchor=anchor)
