@@ -133,6 +133,7 @@ import subprocess
 #     lines.append(line)
 # print(res)
 # print('---', memo)
-print("TIMEOUT" in "6d5sa4f864sadf84 [TIMEOUT]")
-
+a = "sda56f4dsaf"
+for i in a:
+    print(type(i), i)
 
