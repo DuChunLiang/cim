@@ -25,9 +25,8 @@ class Constant:
 
 
 class CPO:
-    log_path = r"/home/pi/canboot-%s.csv" % time.strftime('%Y-%m-%d', time.localtime(time.time()))
-    # log_path = r"canboot-%s.csv" % time.strftime('%Y-%m-%d', time.localtime(time.time()))
-    error_log_path = r"/home/pi/canboot-error-%s.log" % time.strftime('%Y-%m-%d', time.localtime(time.time()))
+    back_log_path = r"/home/pi/canboot-back-to.csv"
+    log_path = r"/home/pi/canboot-log-%s.log" % time.strftime('%Y-%m-%d', time.localtime(time.time()))
     # command_path = "D:\lrzsz\CANBoot\CanBoot/"
     command_path = "/home/pi/work/openblt/Host/"
     product_mode = ""
@@ -37,21 +36,22 @@ class CPO:
     last_choose_file = ""
 
 
-# 日志打印信息
-def logger(content):
+# 追溯日志打印信息
+def logger_back(content):
     now_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
     content = '%s,%s' % (now_date, content)
-    print(content)
-    log_f = open(CPO.log_path, "a")
+    # print(content)
+    log_f = open(CPO.back_log_path, "a")
     log_f.write(content)
     log_f.close()
 
 
-def logger_error(content):
+# 记录日志打印信息
+def logger_record(content):
     now_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
     content = '%s - %s' % (now_date, content)
-    # print(content)
-    log_f = open(CPO.error_log_path, "a")
+    print(content)
+    log_f = open(CPO.log_path, "a")
     log_f.write(content)
     log_f.close()
 
@@ -273,8 +273,7 @@ class BootRecord:
             self.text_console.see(tk.END)
             if "ERROR" in line:
                 CPO.run_res = Constant.ERROR[0]
-                logger("%s,%s\r" % (self.serial_code, CPO.run_res))
-                logger_error("%s,%s, %s\r" % (self.serial_code, CPO.run_res, error_recode))
+                logger_record("%s,%s, %s\r\n" % (self.serial_code, CPO.run_res, error_recode))
                 break
 
         CPO.is_listen_run_command = False
@@ -286,6 +285,7 @@ class BootRecord:
             self.success_count += 1
             item_bg = Constant.SUCCESS[1]
             print("success")
+            logger_back("%s,%s\r\n" % (self.serial_code, CPO.run_res))
         elif CPO.run_res == Constant.ERROR[0]:
             item_bg = Constant.ERROR[1]
             self.error_count += 1
@@ -299,8 +299,9 @@ class BootRecord:
             self.error_count += 1
             print("timeout")
 
-        # 添加日志
-        logger("%s,%s\r" % (self.serial_code, CPO.run_res))
+        if CPO.run_res != Constant.ERROR[0]:
+            # 添加日志
+            logger_record("%s,%s\r\n" % (self.serial_code, CPO.run_res))
         self.complete_run(CPO.run_res, item_bg)
         CPO.run_res = Constant.SUCCESS[0]
 
