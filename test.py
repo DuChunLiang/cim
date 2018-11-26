@@ -133,7 +133,6 @@ import subprocess
 #     lines.append(line)
 # print(res)
 # print('---', memo)
-a = "sda56f4dsaf"
-for i in a:
-    print(type(i), i)
+p = "D:\lrzsz\CANBoot\IC216_Boot19.mhx"
+print(p.split('.')[-1])
 

@@ -5,6 +5,7 @@ import sys
 import time
 import subprocess
 import threading
+import platform
 if sys.version_info.major == 2:
     import Tkinter as tk
 else:
@@ -14,19 +15,32 @@ else:
     from tkinter import messagebox
 
 
-class CPO:
-    log_path = r"boot.log"
-    product_mode = ""
-
-
 # 日志打印信息
 def logger(content):
     now_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-    content = '%s - %s' % (now_date, content)
+    content = '%s,%s' % (now_date, content)
     print(content)
     log_f = open(CPO.log_path, "a")
     log_f.write(content)
     log_f.close()
+
+
+class Constant:
+    RUNNING = ["RUNNING", "goldenrod"]
+    SUCCESS = ["SUCCESS", "green"]
+    ERROR = ["ERROR", "red"]
+    RESET = ["RESET", "blue"]
+    TIMEOUT = ["TIMEOUT", "blueviolet"]
+
+
+class CPO:
+    log_path = r"/home/pi/canboot-%s.csv" % time.strftime('%Y-%m-%d', time.localtime(time.time()))
+    command_path = ""
+    product_mode = ""
+    run_res = Constant.SUCCESS[0]
+    run_common_time = time.time()
+    is_listen_run_command = False
+    last_choose_file = ""
 
 
 class BootRecord:
@@ -68,12 +82,16 @@ class BootRecord:
         self.hw_version_val = tk.Label(self.root, text='0', bg=self.bg)
         self.sw_version_val = tk.Label(self.root, text='0', bg=self.bg)
         self.product_serial_val = tk.Label(self.root, text='0000', bg=self.bg)
+        self.type_radio_val = tk.StringVar()
 
         self.file_entry_var = tk.StringVar()
+        self.file_btn = tk.Button(self.root, text="Choose File", command=self.choose_file)
 
         self.label_time = tk.Label(self.root, text='Serial Code Date:', bg=self.bg)
         self.label_time_value = tk.Label(self.root, text='2018-01-03', bg=self.bg)
         self.boot_list = tk.Listbox(self.root, width=60, bg=self.bg)
+
+        self.reset_btn = tk.Button(self.root, text="Reset", width=12, command=self.reset_run)
 
         self.text_console = ScrolledText(self.root, width=60, bg=self.bg)
 
@@ -107,9 +125,17 @@ class BootRecord:
         file_btn = tk.Button(self.root, text="Choose File", command=self.choose_file)
         file_entry.place(x=950, y=63, anchor=anchor)
         file_btn.place(x=1050, y=59, anchor=anchor)
-        # file_btn.layer.cornerRadius = 10
 
         self.label_serial_code.place(x=150, y=120, anchor=anchor)
+
+        type_radio_1 = tk.Radiobutton(self.root, text="File",
+                                      variable=self.type_radio_val, value="1", command=self.radio_function)
+        type_radio_1.select()
+        type_radio_2 = tk.Radiobutton(self.root, text="Code",
+                                      variable=self.type_radio_val, value="2", command=self.radio_function)
+
+        type_radio_1.place(x=742, y=86, anchor=anchor)
+        type_radio_2.place(x=850, y=86, anchor=anchor)
 
         self.scrollbar.place(x=590, y=128, height=400, anchor=anchor)
         self.scrollbar.config(command=self.boot_list.yview)
@@ -120,6 +146,8 @@ class BootRecord:
         self.text_console.config(state=tk.DISABLED)
         self.text_console.place(x=1100, y=128, height=400, anchor=anchor)
 
+        self.reset_btn.pack(side=tk.BOTTOM, pady=30)
+
     def choose_file(self):
         file_path = askopenfilename()
         if file_path is not None and len(file_path) > 0:
@@ -127,49 +155,144 @@ class BootRecord:
             # 判断后缀
             if file_suffix in ['s19', 'mhx', 'srec']:
                 self.file_entry_var.set(file_path)
+                CPO.last_choose_file = file_path
             else:
                 messagebox.showwarning("提示", "请选择s19、mhx、srec格式文件!")
 
+    def radio_function(self):
+        if self.type_radio_val.get() == "1":
+            self.file_btn.configure(state=tk.ACTIVE)
+            self.file_entry_var.set(CPO.last_choose_file)
+        else:
+            self.file_btn.configure(state=tk.DISABLED)
+            self.file_entry_var.set("")
+
     # 生成命令
     def get_command(self):
-        if CPO.product_mode == "IC218" or CPO.product_mode == "IM218":
-            command = "canbootcli.exe -n=1 -sa=7F000 -ss=1000"
-        elif CPO.product_mode == "IC216":
-            command = "canbootcli.exe -n=1 -sa=260000 -ss=20000"
-        else:
-            command = "canbootcli.exe -n=1 -sa=C000 -ss=2000"
+        run_file = "cbp.exe"
+        if self.type_radio_val.get() == "1":
+            run_file = "canbootcli.exe"
 
-        command += " -sn=%s %s" % (self.serial_code, self.file_entry_var.get())
+        command = CPO.command_path+run_file
+        if CPO.product_mode == "IC218" or CPO.product_mode == "IM218":
+            command += " -n=1 -sa=7F000 -ss=1000"
+        elif CPO.product_mode == "IC216":
+            command += " -n=1 -sa=260000 -ss=20000"
+        else:
+            command += " -n=1 -sa=C000 -ss=2000"
+
+        if self.type_radio_val.get() == "1":
+            command += " -sn=%s %s" % (self.serial_code, self.file_entry_var.get())
+        else:
+            command += " -sn=%s" % self.serial_code
+
         return command
 
+    def entry_key(self, event):
+        keycode = event.keycode
+        key_val = event.char
+        # print('--', keycode, self.is_run_command, self.serial_code)
+        if not self.is_run_command:
+            if keycode == 13:
+                if len(self.serial_code) == 16:
+                    if (self.file_entry_var.get() is not None and len(self.file_entry_var.get()) > 0) \
+                            or self.type_radio_val.get() == "2":
+                        self.root.unbind("<KeyPress>")
+                        self.text_console.config(state=tk.NORMAL)
+
+                        self.text_console.delete('1.0', 'end')
+                        now_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+                        self.analysis_serial_code(self.serial_code)
+                        self.boot_list.insert(self.list_index, "%s          %s          %s"
+                                              % (now_date, self.serial_code, Constant.RUNNING[0]))
+                        self.boot_list.itemconfigure(self.list_index, fg=Constant.RUNNING[1])
+
+                        self.boot_list.yview_moveto(self.list_index)
+
+                        self.is_run_command = True
+                        CPO.is_listen_run_command = True
+                        run_command_t = threading.Thread(target=self.run_command, name="run_command")
+                        run_command_t.setDaemon(True)
+                        run_command_t.start()
+
+                        # listen_run_command_t = threading.Thread(target=self.listen_run_command,
+                        #                                         name="listen_run_command")
+                        # listen_run_command_t.setDaemon(True)
+                        # listen_run_command_t.start()
+                    else:
+                        self.serial_code = ""
+                        messagebox.showwarning("提示", "请选择烧写文件!")
+                else:
+                    self.serial_code = ""
+                    self.is_run_command = False
+
+            elif key_val.isdigit():
+                self.serial_code += key_val
+
     def run_command(self):
-        item_bg = "green"
-        run_res = True
-        popen = subprocess.Popen(self.get_command(), shell=True, stdout=subprocess.PIPE)
+        command = self.get_command()
+        print(command)
+        popen = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
         for line in iter(popen.stdout.readline, b''):
+            CPO.run_common_time = time.time()
             line = line.rstrip().decode('utf8')
-            # print(">>>", line)
-            self.text_console.insert(tk.END, "%s\r\n" % line.replace("\x08", ""))
+
+            line = line.replace("\x08", "").replace("\x1b", "") \
+                .replace("[0m", "").replace("[32m", "") \
+                .replace("[33m", "")
+
+            self.text_console.insert(tk.END, "%s\n" % line)
             self.text_console.see(tk.END)
             if "ERROR" in line:
-                run_res = False
-                subprocess.Popen("taskkill -im canbootcli.exe -f", shell=True)
+                logger("%s          %s   %s\r\n\r\n" % (self.serial_code, CPO.run_res, line))
+                CPO.run_res = Constant.ERROR[0]
+                break
 
-        # print('---', run_res)
+        CPO.is_listen_run_command = False
+        self.killall_process()
+
+        item_bg = ""
         # 填写控制台日志
-        if run_res:
+        if CPO.run_res == Constant.SUCCESS[0]:
             self.success_count += 1
-            res = "SUCCESS"
+            item_bg = Constant.SUCCESS[1]
             print("success")
-        else:
-            item_bg = "red"
+        elif CPO.run_res == Constant.ERROR[0]:
+            item_bg = Constant.ERROR[1]
             self.error_count += 1
-            res = "ERROR"
             print("error")
+        elif CPO.run_res == Constant.RESET[0]:
+            item_bg = Constant.RESET[1]
+            self.error_count += 1
+            print("reset")
+        elif CPO.run_res == Constant.TIMEOUT[0]:
+            item_bg = Constant.TIMEOUT[1]
+            self.error_count += 1
+            print("timeout")
 
         # 添加日志
-        logger("%s          %s\r\n" % (self.serial_code, res))
+        logger("%s          %s\r\n" % (self.serial_code, CPO.run_res))
+        self.complete_run(CPO.run_res, item_bg)
+        CPO.run_res = Constant.SUCCESS[0]
 
+    # 监听烧写操作是否超时
+    def listen_run_command(self):
+        print('---', self.is_run_command)
+        CPO.run_common_time = time.time()
+        while True:
+            if self.is_run_command:
+                if (time.time() - CPO.run_common_time) > 10:
+                    CPO.run_res = Constant.TIMEOUT[0]
+                    self.killall_process()
+                    print("listen_run_command timeout")
+                    break
+            else:
+                break
+
+        print("listen_run_command end")
+
+    # 完成运行后操作
+    def complete_run(self, res, item_bg):
         self.boot_list.delete(self.list_index)
         now_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
         self.boot_list.insert(self.list_index, "%s          %s          %s"
@@ -183,33 +306,9 @@ class BootRecord:
 
         self.list_index += 1
         self.serial_code = ""
-        self.is_run_command = False
         self.text_console.config(state=tk.DISABLED)
-
-    def entry_key(self, event):
-        keycode = event.keycode
-        key_val = event.char
-        if not self.is_run_command:
-            if keycode == 13 and len(self.serial_code) == 16:
-                if self.file_entry_var.get() is not None and len(self.file_entry_var.get()) > 0:
-                    self.text_console.config(state=tk.NORMAL)
-                    self.is_run_command = True
-                    self.text_console.delete('1.0', 'end')
-                    now_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-                    self.analysis_serial_code(self.serial_code)
-                    self.boot_list.insert(self.list_index, "%s          %s          %s"
-                                          % (now_date, self.serial_code, "RUNNING"))
-                    self.boot_list.itemconfigure(self.list_index, fg="goldenrod")
-
-                    run_command_t = threading.Thread(target=self.run_command, name="run_command")
-                    run_command_t.setDaemon(True)
-                    run_command_t.start()
-                else:
-                    self.serial_code = ""
-                    messagebox.showwarning("提示", "请选择烧写文件!")
-
-            elif key_val.isdigit():
-                self.serial_code += key_val
+        self.root.bind("<KeyPress>", self.entry_key)
+        self.is_run_command = False
 
     def analysis_serial_code(self, code):
         if code is not None and len(code) >= 16:
@@ -235,6 +334,23 @@ class BootRecord:
             self.hw_version_val['text'] = hw_version
             self.sw_version_val['text'] = sw_version
             self.product_serial_val['text'] = product_serial
+
+    # 杀掉运行命令进程
+    @staticmethod
+    def killall_process():
+        sysstr = platform.system()
+        if sysstr == "Windows":
+            subprocess.Popen("taskkill -im canbootcli.exe -f", shell=True)
+            subprocess.Popen("taskkill -im cbp.exe -f", shell=True)
+        else:
+            subprocess.Popen("killall -9 cbp", shell=True)
+            subprocess.Popen("killall -9 canbootcli", shell=True)
+
+    # 重置操作
+    def reset_run(self):
+        self.killall_process()
+        if self.is_run_command:
+            CPO.run_res = Constant.RESET[0]
 
     def run(self):
         self.root.mainloop()
