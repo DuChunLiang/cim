@@ -26,7 +26,8 @@ class Constant:
 
 class CPO:
     back_log_path = r"/home/pi/canboot-back-to.csv"
-    log_path = r"/home/pi/canboot-log-%s.log" % time.strftime('%Y-%m-%d', time.localtime(time.time()))
+    log_path = r"/home/pi/canbootlog/canboot-log-%s.log" \
+               % time.strftime('%Y-%m-%d', time.localtime(time.time()))
     # command_path = "D:\lrzsz\CANBoot\CanBoot/"
     command_path = "/home/pi/work/openblt/Host/"
     product_mode = ""
@@ -355,8 +356,8 @@ class BootRecord:
             hw_version = "%s.%s" % (code[2:3], code[3:4])
             sw_version = "%s.%s" % (code[4:5], code[5:6])
             year = "20%s" % code[6:8]
-            week = int(code[8:10])
-            week_day = int(code[10:12])
+            week = int(code[8:10]) - 1
+            week_day = int(code[10:12]) - 1
             product_serial = code[12:17]
             date = "%s-%s-%s" % (year, week, week_day)
             self.label_time_value['text'] = time.strftime("%Y-%m-%d", time.strptime(date, '%Y-%U-%w'))
