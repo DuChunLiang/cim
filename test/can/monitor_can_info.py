@@ -9,7 +9,7 @@ import binascii
 
 
 # 日志打印信息
-def logger(content, is_file=False, path="./log/log.log"):
+def logger(content, is_file=False, path="./logs/log.log"):
     now_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
     log_data = '%s - %s' % (now_date, content)
     print(log_data)
@@ -33,8 +33,8 @@ class CPO:
     reset_op = True
     is_shutdown = False
     is_record_frame = False
-    error_log_path = "./log/error.log"
-    interval_log_path = "./log/interval.log"
+    error_log_path = "./logs/error.log"
+    interval_log_path = "./logs/interval.log"
 
     frame_timeout = 10  # 帧发送超时时间(毫秒)
 
@@ -126,7 +126,7 @@ class Monitor:
                     CPO.is_shutdown = True
             else:
                 frame_id = bo.arbitration_id
-                
+
                 # 判断是否有重启或复位
                 if frame_id == 0x001 or frame_id == 0X0CDA01F1 or frame_id == 0x040:
                     if time.time() - CPO.reset_time > 5:
@@ -151,6 +151,7 @@ class Monitor:
                         self.record_count = 1
                 else:
                     source_frame_id = self.get_source_id(frame_id)
+
                     # 判断是否在dbc文件内
                     if source_frame_id in CPO.dbc_id_list:
                         timestamp = bo.timestamp
@@ -206,9 +207,10 @@ class Monitor:
                                 if len(CPO.interval_dict) >= len(CPO.frame_id_dict):
                                     content = ""
                                     for f_key in sorted(CPO.interval_dict):
-                                        content += "0x%03X %03s %s\r\n" % (CPO.interval_dict[f_key][0],
-                                                                           CPO.interval_dict[f_key][1],
-                                                                           CPO.interval_dict[f_key][2])
+                                        now_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+                                        content += "%s - 0x%03X %03s %s\r\n" % (now_date, CPO.interval_dict[f_key][0],
+                                                                                CPO.interval_dict[f_key][1],
+                                                                                CPO.interval_dict[f_key][2])
                                     content += "\r%s\r\n\r\n" % len(CPO.frame_id_dict)
                                     log_file = open(CPO.interval_log_path, "w")
                                     log_file.write(content)

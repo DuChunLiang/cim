@@ -98,5 +98,3 @@ class Convert:  # 转换
         for i in range(0, len(code), 4):
             out.append(self.hexmap[code[i:i + 4]])
         return ("".join(out))
-
-print(hex(int(Convert().convertToHex("01101001"))))

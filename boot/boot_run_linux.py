@@ -25,11 +25,11 @@ class Constant:
 
 
 class CPO:
-    back_log_path = r"/home/pi/canboot-back-to.csv"
-    log_path = r"/home/pi/canbootlog/canboot-log-%s.log" \
+    back_log_path = r"D:\lrzsz/canboot-back-to.csv"
+    log_path = r"D:\lrzsz/canboot-log-%s.log" \
                % time.strftime('%Y-%m-%d', time.localtime(time.time()))
-    # command_path = "D:\lrzsz\CANBoot\CanBoot/"
-    command_path = "/home/pi/work/openblt/Host/"
+    command_path = "D:\lrzsz\CanBoot/"
+    # command_path = "/home/pi/work/openblt/Host/"
     product_mode = ""
     run_res = Constant.SUCCESS[0]
     run_common_time = time.time()
@@ -202,11 +202,11 @@ class BootRecord:
 
         command = CPO.command_path+run_file+node
         if CPO.product_mode == "IC216":
-            command += " -d=can0 -sa=260000 -ss=20000"
+            command += " -sa=260000 -ss=20000"
         elif CPO.product_mode == "IC218" or CPO.product_mode == "IM218":
-            command += " -d=can0 -sa=7F000 -ss=1000"
+            command += " -sa=7F000 -ss=1000"
         elif CPO.product_mode == "IM228":
-            command += " -d=can0 -q -sa=C000 -ss=2000"
+            command += " -q -sa=C000 -ss=2000"
 
         if self.type_radio_val.get() == "1":
             command += " -sn=%s %s" % (self.serial_code, self.file_entry_var.get())
@@ -220,7 +220,7 @@ class BootRecord:
         key_val = event.char
         # print('--', keycode, self.is_run_command, self.serial_code)
         if not self.is_run_command:
-            if keycode == 36:
+            if keycode == 13:
                 if len(self.serial_code) == 16:
                     if (self.file_entry_var.get() is not None and len(self.file_entry_var.get()) > 0) \
                             or self.type_radio_val.get() == "2":
@@ -357,7 +357,9 @@ class BootRecord:
             sw_version = "%s.%s" % (code[4:5], code[5:6])
             year = "20%s" % code[6:8]
             week = int(code[8:10]) - 1
-            week_day = int(code[10:12]) - 1
+            week_day = int(code[10:12])
+            if week_day == 7:
+                week_day = 0
             product_serial = code[12:17]
             date = "%s-%s-%s" % (year, week, week_day)
             self.label_time_value['text'] = time.strftime("%Y-%m-%d", time.strptime(date, '%Y-%U-%w'))
@@ -400,3 +402,5 @@ class BootRecord:
 if __name__ == "__main__":
     BootRecord().run()
 
+
+#cbp -sa=0x7FFE0  -ss=0x20 -n=1

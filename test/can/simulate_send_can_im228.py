@@ -5,7 +5,7 @@ import sys
 import time
 # import cantools
 import can
-# import binascii
+import threading
 
 
 # 日志打印信息
@@ -21,14 +21,13 @@ class CPO:
 
 
 class Send:
-
     def __init__(self):
         self.interval_millisecond = 500
         if len(sys.argv) >= 3:
             self.interval_millisecond = int(sys.argv[2])
 
         can.rc['interface'] = 'socketcan'
-        can.rc['channel'] = sys.argv[1]
+        can.rc['channel'] = "can0"
         self.can_bus = can.interface.Bus()
 
         # 前模块帧
@@ -42,35 +41,47 @@ class Send:
 
     def get_message(self, module):
         data = b"\x00\x00\x00\x00\x00\x00\x00\x00"
-        msg = can.Message(arbitration_id=module[0], data=data[0:module[1]], extended_id=False)
+        msg = can.Message(arbitration_id=module[0], data=data[0:module[1]])
         return msg
 
     def send_can(self, msg):
         self.can_bus.send(msg)
+        time.sleep(0.001)
         # logger(msg)
 
-    def start(self):
+    def send_heart(self):
         while True:
-            CPO.recode_count += 10
+            self.send_can(self.get_message(self.front_module[0]))
+            self.send_can(self.get_message(self.after_module[0]))
+            time.sleep(1)
 
-            if CPO.recode_count % self.interval_millisecond == 0:
-                for f_m in self.front_module:
-                    if f_m[1] == 8:
-                        self.send_can(self.get_message(f_m))
+    def send_data(self):
+        while True:
+            for f_m in self.front_module:
+                if f_m[1] == 8:
+                    self.send_can(self.get_message(f_m))
 
-                for a_m in self.after_module:
-                    if a_m[1] == 8:
-                        self.send_can(self.get_message(a_m))
+            for a_m in self.after_module:
+                if a_m[1] == 8:
+                    self.send_can(self.get_message(a_m))
 
-            if CPO.recode_count % 1000 == 0:
-                self.send_can(self.get_message(self.front_module[0]))
-                self.send_can(self.get_message(self.after_module[0]))
+            time.sleep((self.interval_millisecond - 2) * 0.001)
 
-            time.sleep(0.01)
+    def start(self):
+        thread_name = "threading-heart"
+        t_heart = threading.Thread(target=self.send_heart, name=thread_name)
+        t_heart.setDaemon(True)
+
+        thread_name = "threading-data"
+        t_data = threading.Thread(target=self.send_data, name=thread_name)
+        t_data.setDaemon(True)
+
+        t_heart.start()
+        t_data.start()
+
+        t_heart.join()
 
 
 if __name__ == "__main__":
-    if len(sys.argv) >= 2:
-        Send().start()
-    else:
-        logger("Please set can channel")
+    Send().start()
+

@@ -1,19 +1,32 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
+import os
 import sys
 import time
 import cantools
 import can
 import binascii
-import threading
 
 
 # 日志打印信息
-def logger(content):
-    if CPO.debug:
-        now_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-        print('%s - %s' % (now_date, content))
+# def logger(content):
+#     if CPO.debug:
+#         now_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+#         print('%s - %s' % (now_date, content))
+
+
+def logger(content, is_file=False, path="./logs/error.log"):
+    now_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+    log_data = '%s - %s\r\n' % (now_date, content)
+    print(log_data)
+    if is_file:
+        if not os.path.exists("./logs/"):
+            os.makedirs("./logs/")
+
+        log_file = open(path, "a")
+        log_file.write(log_data)
+        log_file.close()
 
 
 class CPO:
@@ -28,51 +41,51 @@ class CPO:
     complete_package_300 = ""
     complete_package_380 = ""
 
+    break_time = time.time()
+    is_break = False
+    op_out = []
+
     out_can_dict = {
-        "out1": b'\x00\x64\x64\x64\x64\x00\x00\x01', "out2": b'\x04\x64\x64\x64\x64\x00\x00\x00',
-        "out3": b'\x10\x64\x64\x64\x64\x00\x00\x00', "out4": b'\x40\x64\x64\x64\x64\x00\x00\x00',
-        "out5": b'\x00\x64\x64\x64\x64\x01\x00\x00', "out6": b'\x00\x64\x64\x64\x64\x02\x00\x00',
-        "out7": b'\x00\x64\x64\x64\x64\x04\x00\x00', "out8": b'\x00\x64\x64\x64\x64\x08\x00\x00',
-        "out9": b'\x00\x64\x64\x64\x64\x10\x00\x00', "out10": b'\x00\x64\x64\x64\x64\x20\x00\x00',
-        "out11": b'\x00\x64\x64\x64\x64\x40\x00\x00', "out12": b'\x00\x64\x64\x64\x64\x80\x00\x00',
-        "out13": b'\x00\x64\x64\x64\x64\x00\x01\x00', "out14": b'\x00\x64\x64\x64\x64\x00\x02\x00',
-        "out15": b'\x00\x64\x64\x64\x64\x00\x04\x00', "out16": b'\x00\x64\x64\x64\x64\x00\x08\x00',
-        "out17": b'\x00\x64\x64\x64\x64\x00\x10\x00', "out18": b'\x00\x64\x64\x64\x64\x00\x20\x00',
-        "out19": b'\x00\x64\x64\x64\x64\x00\x40\x02', "out20": b'\x00\x64\x64\x64\x64\x00\x80\x00',
+        "out1": [b'\x00\x64\x64\x64\x64\x00\x00\x01', "380_13"], "out2": [b'\x04\x64\x64\x64\x64\x00\x00\x00', "380_2"],
+        "out3": [b'\x10\x64\x64\x64\x64\x00\x00\x00', "380_3"], "out4": [b'\x40\x64\x64\x64\x64\x00\x00\x00', "380_4"],
+        "out5": [b'\x00\x64\x64\x64\x64\x01\x00\x00', "380_5"], "out6": [b'\x00\x64\x64\x64\x64\x02\x00\x00', "380_6"],
+        "out7": [b'\x00\x64\x64\x64\x64\x04\x00\x00', "380_7"], "out8": [b'\x00\x64\x64\x64\x64\x08\x00\x00', "380_8"],
+        "out9": [b'\x00\x64\x64\x64\x64\x10\x00\x00', "300_1"], "out10": [b'\x00\x64\x64\x64\x64\x20\x00\x00', "300_2"],
+        "out11": [b'\x00\x64\x64\x64\x64\x40\x00\x00', "300_3"], "out12": [b'\x00\x64\x64\x64\x64\x80\x00\x00', "300_4"],
+        "out13": [b'\x00\x64\x64\x64\x64\x00\x01\x00', "300_5"], "out14": [b'\x00\x64\x64\x64\x64\x00\x02\x00', "300_6"],
+        "out15": [b'\x00\x64\x64\x64\x64\x00\x04\x00', "300_7"], "out16": [b'\x00\x64\x64\x64\x64\x00\x08\x00', "300_8"],
+        "out17": [b'\x00\x64\x64\x64\x64\x00\x10\x00', "300_9"], "out18": [b'\x00\x64\x64\x64\x64\x00\x20\x00', "300_10"],
+        "out19": [b'\x00\x64\x64\x64\x64\x00\x00\x02', "380_13"], "out20": [b'\x00\x64\x64\x64\x64\x00\x80\x00', "380_10"],
     }
 
+    # 10 12
     out_ran_dict = {
         "out5": b'\x00\x00\x10\x64\x64\x64\x64\x64', "out6": b'\x01\x00\x10\x64\x64\x64\x64\x64',
         "out7": b'\x02\x00\x10\x64\x64\x64\x64\x64', "out8": b'\x03\x00\x10\x64\x64\x64\x64\x64',
         "out9": b'\x04\x00\x10\x64\x64\x64\x64\x64', "out10": b'\x05\x00\x10\x64\x64\x64\x64\x64',
         "out11": b'\x06\x00\x10\x64\x64\x64\x64\x64', "out12": b'\x07\x00\x10\x64\x64\x64\x64\x64',
-        "out13": b'\x09\x00\x10\x64\x64\x64\x64\x64', "out14": b'\x0A\x00\x10\x64\x64\x64\x64\x64',
-        "out15": b'\x0B\x00\x10\x64\x64\x64\x64\x64', "out16": b'\x0C\x00\x10\x64\x64\x64\x64\x64',
-        "out17": b'\x0D\x00\x10\x64\x64\x64\x64\x64', "out18": b'\x0E\x00\x10\x64\x64\x64\x64\x64',
-        "out20": b'\x0F\x00\x10\x64\x64\x64\x64\x64'
+        "out13": b'\x08\x00\x10\x64\x64\x64\x64\x64', "out14": b'\x09\x00\x10\x64\x64\x64\x64\x64',
+        "out15": b'\x0A\x00\x10\x64\x64\x64\x64\x64', "out16": b'\x0B\x00\x10\x64\x64\x64\x64\x64',
+        "out17": b'\x0C\x00\x10\x64\x64\x64\x64\x64', "out18": b'\x0D\x00\x10\x64\x64\x64\x64\x64'
+        # "out20": b'\xAB\xCD\x1E\x64\x64\x64\x64\x64'
     }
 
-    out_ran_dict_bak = {
-        "out5_9": b'\x10\x32\x54\x64\x64\x64\x64\x64', "out10_14": b'\x65\x87\x59\x64\x64\x64\x64\x64',
-        "out15_20": b'\xBA\xCD\x5F\x64\x64\x64\x64\x64'
-    }
-
-
-    def __init__(self):
-        pass
+    out_close = b'\x00\x00\x00\x00\x00\x00\x00\x00'
 
 
 class Analysis:
 
     def __init__(self):
         # 加载dbc文件
+        self.cur_val = 800    # 设备电流值(单位 mA) 24V/电阻值*1000
+        self.cur_scope = [self.cur_val-100, self.cur_val+100]
         self.db = cantools.database.load_file('dbc/IM218.dbc')
         can.rc['interface'] = 'socketcan'
         can.rc['channel'] = sys.argv[1]
         self.can_bus = can.interface.Bus()
 
     def log(self, content, timestamp):
-        print(content)
+        pass
 
     # 判断id在dbc文件中是否存在
     def id_is_exist(self, _id):
@@ -119,7 +132,6 @@ class Analysis:
             CPO.dbc_id_list.append(m.frame_id)
 
         while True:
-            CPO.test_time = time.time()
             bo = self.can_bus.recv()
             if not bo.is_extended_id:
                 frame_id = self.get_source_id(bo.arbitration_id)
@@ -197,74 +209,58 @@ class Analysis:
                     elif frame_id == 0x300:
                         res = self.db.decode_message(frame_id, data)
                         if res is not None:
-                            val_range = self.get_signal_val_range(frame_id, "ledi_ch1_current")
+                            # val_range = self.get_signal_val_range(frame_id, "ledi_ch1_current")
                             # print('--', val_range)
 
                             ledi_ch1_current = int(res['ledi_ch1_current'])
-                            ledi_ch1_id = int(res['ledi_ch1_id'])
-                            ledi_ch1_voltage = int(res['ledi_ch1_voltage'])
+                            ledi_ch1_id = "300_%s" % res['ledi_ch1_id']
+                            # ledi_ch1_voltage = int(res['ledi_ch1_voltage'])
                             ledi_ch2_current = int(res['ledi_ch2_current'])
-                            ledi_ch2_id = int(res['ledi_ch2_id'])
-                            ledi_ch2_voltage = int(res['ledi_ch2_voltage'])
+                            ledi_ch2_id = "300_%s" % res['ledi_ch2_id']
+                            # ledi_ch2_voltage = int(res['ledi_ch2_voltage'])
 
-                            pack_data = ""
-                            if ledi_ch1_id > 0:
-                                pack_data += "{%s %s %s}" % (ledi_ch1_id, ledi_ch1_current, ledi_ch1_voltage)
-                            if ledi_ch2_id > 0:
-                                pack_data += "{%s %s %s}" % (ledi_ch2_id, ledi_ch2_current, ledi_ch2_voltage)
+                            current_val = 0
+                            index = CPO.op_out[1]
+                            if ledi_ch1_id == index:
+                                current_val = ledi_ch1_current
+                            elif ledi_ch2_id == index:
+                                current_val = ledi_ch2_current
 
-                            if len(CPO.multiple_id_300) == 0:
-                                self.create_multiple_id(ledi_ch1_id, frame_id)
-                            else:
-
-                                if ledi_ch1_id == CPO.multiple_id_300[0]:
-                                    CPO.complete_package_300 = ""
-                                    CPO.complete_package_300 += pack_data
-                                elif ledi_ch1_id != CPO.multiple_id_300[len(CPO.multiple_id_300) - 1]:
-                                    CPO.complete_package_300 += pack_data
-                                else:
-                                    CPO.complete_package_300 += pack_data
-
-                                    content = "0x%03X %s" % (bo.arbitration_id, CPO.complete_package_300)
-                                    self.log(content, bo.timestamp)
+                            # if current_val > 0:
+                            print("%s val: %s" % (CPO.op_out, current_val))
+                            if current_val > 0:
+                                CPO.is_break = True
 
                     elif frame_id == 0x380:
                         res = self.db.decode_message(frame_id, data)
                         if res is not None:
-                            out_ch1_id = int(res['out_ch1_id'])
-                            out_ch2_id = int(res['out_ch2_id'])
-                            out_ch3_id = int(res['out_ch3_id'])
+                            out_ch1_id = "380_%s" % res['out_ch1_id']
+                            out_ch2_id = "380_%s" % res['out_ch2_id']
+                            out_ch3_id = "380_%s" % res['out_ch3_id']
                             out_ch1_value = int(res['out_ch1_value'])
                             out_ch2_value = int(res['out_ch2_value'])
                             out_ch3_value = int(res['out_ch3_value'])
 
-                            if len(CPO.multiple_id_380) == 0:
-                                self.create_multiple_id(out_ch1_id, frame_id)
-                            else:
-                                pack_data = ""
-                                if out_ch1_id > 0:
-                                    pack_data += "{%s %s}" % (out_ch1_id, out_ch1_value)
-                                if out_ch2_id > 0:
-                                    pack_data += "{%s %s}" % (out_ch2_id, out_ch2_value)
-                                if out_ch3_id > 0:
-                                    pack_data += "{%s %s}" % (out_ch3_id, out_ch3_value)
+                            current_val = 0
 
-                                if out_ch1_id == CPO.multiple_id_380[0]:
-                                    CPO.complete_package_380 = ""
-                                    CPO.complete_package_380 += pack_data
-                                elif out_ch1_id != CPO.multiple_id_380[len(CPO.multiple_id_380) - 1]:
-                                    CPO.complete_package_380 += pack_data
-                                else:
-                                    CPO.complete_package_380 += pack_data
+                            # out = CPO.op_out[0]
+                            index = CPO.op_out[1]
+                            if out_ch1_id == index:
+                                current_val = out_ch1_value
+                            elif out_ch2_id == index:
+                                current_val = out_ch2_value
+                            elif out_ch3_id == index:
+                                current_val = out_ch3_value
 
-                                    content = "0x%03X %s" % (bo.arbitration_id, CPO.complete_package_380)
-                                    self.log(content, bo.timestamp)
+                            # print(out_ch1_id, out_ch1_value, out_ch2_id, out_ch2_value, out_ch3_id, out_ch3_value)
+                            print("%s val: %s" % (CPO.op_out, current_val))
+                            if current_val > 0:
+                                CPO.is_break = True
 
                     elif frame_id == 0x100:
                         res = self.db.decode_message(frame_id, data)
-                        print(res)
-                        for r in dict(res).items():
-                            print(r)
+                        # for r in dict(res).items():
+                        #     print(r)
                         if res is not None:
                             ana1 = int(res['ana1'])
                             ana2 = int(res['ana2'])
@@ -341,23 +337,172 @@ class Analysis:
                 #     print('-------%s在dbc文件中不存在-------' % frame_id)
 
     def can_send(self, arbitration_id=None, data=None):
-        print("send data: ", binascii.b2a_hex(data))
+        # print("send data: ", binascii.b2a_hex(data))
         msg = can.Message(arbitration_id=arbitration_id, data=data, extended_id=False)
         self.can_bus.send(msg=msg, timeout=10)
+        time.sleep(0.001)
+
+    # 判断out1电流是否归零
+    def check_out1(self):
+        logger(content="check out1 zeroing...", is_file=True, path="./logs/catalina.log")
+        record_count = 0
+        current_val = 0
+        while True:
+            bo = self.can_bus.recv()
+            if bo is not None:
+                if not bo.is_extended_id:
+                    frame_id = self.get_source_id(bo.arbitration_id)
+                    data = (bo.data + bytearray([0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]))[:8]
+                    if frame_id == 0x380:
+                        res = self.db.decode_message(frame_id, data)
+                        if res is not None:
+                            out_ch1_id = "380_%s" % res['out_ch1_id']
+                            out_ch2_id = "380_%s" % res['out_ch2_id']
+                            out_ch3_id = "380_%s" % res['out_ch3_id']
+                            out_ch1_value = int(res['out_ch1_value'])
+                            out_ch2_value = int(res['out_ch2_value'])
+                            out_ch3_value = int(res['out_ch3_value'])
+
+                            # out_key = CPO.op_out[0]
+                            index = "380_13"
+                            if out_ch1_id == index:
+                                current_val += out_ch1_value
+                            elif out_ch2_id == index:
+                                current_val += out_ch2_value
+                            elif out_ch3_id == index:
+                                current_val += out_ch3_value
+
+                            record_count += 1
+                            if record_count >= 10:
+                                # print("%s val=%s" % (index, current_val))
+                                if current_val <= 0:
+                                    break
+                                record_count = 0
+                                current_val = 0
 
     # 发送控制
-    def send_control(self, out):
-        for i in range(100):
-            self.can_send(arbitration_id=0x0C1, data=CPO.out_can_dict[out])
-            self.can_send(arbitration_id=0x141, data=CPO.out_ran_dict[out])
-            time.sleep(0.01)
+    def send_control(self):
+        while True:
+            self.check_out1()
+            for out_key in sorted(CPO.out_can_dict):
+                CPO.break_time = time.time()
+                CPO.op_out = [out_key, CPO.out_can_dict[out_key][1]]
+                data = CPO.out_can_dict[out_key][0]
+                key = out_key
+                CPO.is_break = False
+                for i in range(2):
+                    self.can_send(arbitration_id=0x0C1, data=data)
+                    if key in CPO.out_ran_dict:
+                        self.can_send(arbitration_id=0x141, data=CPO.out_ran_dict[key])
+                    time.sleep(0.1)
+
+                recv_count = 1
+                recv_max_val = 0
+                while True:
+                    bo = self.can_bus.recv()
+                    if bo is not None:
+                        if not bo.is_extended_id:
+                            frame_id = self.get_source_id(bo.arbitration_id)
+                            data = (bo.data + bytearray([0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]))[:8]
+
+                            if frame_id == 0x300:
+                                res = self.db.decode_message(frame_id, data)
+                                if res is not None:
+                                    ledi_ch1_current = int(res['ledi_ch1_current'])
+                                    ledi_ch1_id = "300_%s" % res['ledi_ch1_id']
+                                    # ledi_ch1_voltage = int(res['ledi_ch1_voltage'])
+                                    ledi_ch2_current = int(res['ledi_ch2_current'])
+                                    ledi_ch2_id = "300_%s" % res['ledi_ch2_id']
+                                    # ledi_ch2_voltage = int(res['ledi_ch2_voltage'])
+
+                                    out_key = CPO.op_out[0]
+                                    current_val = 0
+                                    index = CPO.op_out[1]
+                                    if ledi_ch1_id == index:
+                                        current_val = ledi_ch1_current
+                                    elif ledi_ch2_id == index:
+                                        current_val = ledi_ch2_current
+
+                                    if current_val > 0 or (time.time() - CPO.break_time) > 3:
+                                        # print("recv_count:", recv_count)
+                                        # print("%s val: %s" % (CPO.op_out, current_val))
+                                        if current_val > recv_max_val:
+                                            recv_max_val = current_val
+
+                                        if recv_count > 3 or (time.time() - CPO.break_time) > 5:
+                                            self.check_data(out_key, recv_max_val)
+                                            break
+
+                                        recv_count += 1
+
+                            elif frame_id == 0x380:
+                                res = self.db.decode_message(frame_id, data)
+                                if res is not None:
+                                    out_ch1_id = "380_%s" % res['out_ch1_id']
+                                    out_ch2_id = "380_%s" % res['out_ch2_id']
+                                    out_ch3_id = "380_%s" % res['out_ch3_id']
+                                    out_ch1_value = int(res['out_ch1_value'])
+                                    out_ch2_value = int(res['out_ch2_value'])
+                                    out_ch3_value = int(res['out_ch3_value'])
+
+                                    current_val = 0
+
+                                    out_key = CPO.op_out[0]
+                                    index = CPO.op_out[1]
+                                    if out_ch1_id == index:
+                                        current_val = out_ch1_value
+                                    elif out_ch2_id == index:
+                                        current_val = out_ch2_value
+                                    elif out_ch3_id == index:
+                                        current_val = out_ch3_value
+
+                                    if current_val > 0 or (time.time() - CPO.break_time) > 3:
+                                        # print("recv_count:", recv_count)
+                                        # print("%s val: %s" % (CPO.op_out, current_val))
+                                        if current_val > recv_max_val:
+                                            recv_max_val = current_val
+
+                                        if recv_count > 3 or (time.time() - CPO.break_time) > 5:
+                                            self.check_data(out_key, recv_max_val)
+                                            break
+
+                                        recv_count += 1
+                    else:
+                        logger(content="can connect error", is_file=True, path="./logs/catalina.log")
+                        time.sleep(5)
+                        break
+
+                # 关闭输出
+                for i in range(2):
+                    self.can_send(arbitration_id=0x0C1, data=CPO.out_close)
+                    time.sleep(0.1)
+            logger(content="-----------------------complete------------------------", is_file=True, path="./logs/catalina.log")
+            time.sleep(0.5)
+
+    def check_data(self, out_key, current_val):
+
+        if int(current_val) < self.cur_scope[0] or int(current_val) > self.cur_scope[1]:
+            content = "error %s %s[%s %s]" % (out_key, current_val, self.cur_scope[0], self.cur_scope[1])
+            logger(content=content, is_file=True)
+        else:
+            content = "success %s %s[%s %s]" % (out_key, current_val, self.cur_scope[0], self.cur_scope[1])
+        logger(content=content, is_file=True, path="./logs/catalina.log")
+
+    def send_control_test(self, out):
+        for i in range(2):
+            self.can_send(arbitration_id=0x0C1, data=CPO.out_can_dict[out][0])
+            if out in CPO.out_ran_dict:
+                self.can_send(arbitration_id=0x141, data=CPO.out_ran_dict[out])
+            time.sleep(0.1)
 
 
 if __name__ == "__main__":
     a = Analysis()
-    a.analysis_can()
+    # a.analysis_can()
 
-    # a.send_control(sys.argv[2])
+    a.send_control()
+
+    # a.send_control_test(sys.argv[2])
 
 
 

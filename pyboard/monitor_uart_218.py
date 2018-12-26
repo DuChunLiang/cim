@@ -8,7 +8,7 @@ from pyb import RTC
 
 
 class CPO:
-    is_debug = 0
+    is_debug = 1
     temp_data = None
     repeat_count = 0
     restart_count = 0
@@ -18,7 +18,7 @@ class CPO:
     run_millis = 0
     startup_millis = 0
     #              年  月 日 星期 时  分 秒  倒计时
-    init_time = (2018, 11, 20, 3, 9, 30, 0, 0)    # 年 月 日 星期 时 分 秒 倒计时
+    init_time = (2018, 12, 18, 2, 15, 50, 0, 0)    # 年 月 日 星期 时 分 秒 倒计时
     restart_log_path = "restart_count.log"
 
 
@@ -79,6 +79,14 @@ class MonitorUart:
             sum += i
         return sum & 0x00ff
 
+    @staticmethod
+    def bytes_to_hexstr(bytes):
+        r = ""
+        for b in bytes:
+            s = "%02X" % b
+            r += s
+        return r
+
     def monitor_card_screen(self):
         self.write_log("start monitor card screen")
         self.pin_low(CPO.close_gpio)
@@ -126,38 +134,37 @@ class MonitorUart:
         self.write_log("start monitor restart")
         self.pin_high(CPO.power_gpio)
         self.pin_low(CPO.close_gpio)
+
         while True:
             try:
-                # print(self.uart.any())
                 if self.uart.any() > 0:
-                    rev = self.uart.readline()
-                    if len(rev) == 15:
-                        # head = rev[12:]
+                    rev = self.uart.read(18)
+                    # print('data---', self.bytes_to_hexstr(rev), len(rev))
+                    if len(rev) == 18:
+                        # head = rev[:4]
                         # checkout_bit = head[0]
                         # type = head[1]
                         # data_len = head[2]
-                        data = rev[:10]
-                        check_sum = rev[10]
-
+                        data = rev[3:16]
+                        check_sum = rev[16]
                         if self.get_check_sum(data) == check_sum:
                             restart_len_time = pyb.millis() - CPO.run_millis
-                            # print('--', restart_len_time)
-                            if restart_len_time > 6 * 1000:
+                            if restart_len_time > 7 * 1000:
                                 self.write_log("warning: restart time too long %s秒" % str(restart_len_time/1000))
 
-                            # print(rev)
-                            self.uart.read(self.uart.any())
-                            pyb.delay(5000)
+                            pyb.delay(15000)
                             self.pin_low(CPO.power_gpio)
                             pyb.delay(1000)
                             self.pin_high(CPO.power_gpio)
                             CPO.run_millis = pyb.millis()
-                            self.uart.read(self.uart.any())
 
                             CPO.restart_count += 1
                             f = open("restart_count.log", "w")
                             f.write(str(CPO.restart_count))
                             f.close()
+
+                            self.uart.deinit()
+                            self.uart.init(baudrate=115200, bits=8, parity=None, stop=1)
                 else:
                     restart_len_time = pyb.millis() - CPO.run_millis
                     if restart_len_time > 7.5 * 1000:

@@ -133,6 +133,22 @@ import subprocess
 #     lines.append(line)
 # print(res)
 # print('---', memo)
-p = "D:\lrzsz\CANBoot\IC216_Boot19.mhx"
-print(p.split('.')[-1])
+# out = open()
+# p = "D:\lrzsz\R.java"
+# f = open(p, "r+")
+# for d in f.readlines():
+#     if len(d) > 0 and "=" in d:
+#         val = d[-12:len(d)-2]
+#         if val.isdigit():
+#             out_val = "%s%s" % (d[:len(d)-12], str(hex(int(val))))
+#             # d[:len(d)-2] = str(hex(int(val)))
+#             print(out_val)
+#         else:
+#             print(d)
+#     else:
+#         print(d)
+import time
 
+# print(time.strptime("2018-01-01", "%Y-%m-%d"))
+PAD = b'\xf1\x9e'
+print(PAD)
