@@ -9,7 +9,7 @@ import binascii
 
 
 # 日志打印信息
-def logger(content, is_file=False, path="./logs/log.log"):
+def logger(content, is_file=False, path="./logs/monitor_log.log"):
     now_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
     log_data = '%s - %s' % (now_date, content)
     print(log_data)
@@ -33,15 +33,18 @@ class CPO:
     reset_op = True
     is_shutdown = False
     is_record_frame = False
-    error_log_path = "./logs/error.log"
-    interval_log_path = "./logs/interval.log"
+    error_log_path = "./logs/monitor_error.log"
+    interval_log_path = "./logs/monitor_interval.log"
+    catalina_log_path = "./logs/monitor_catalina.log"
 
-    frame_timeout = 10  # 帧发送超时时间(毫秒)
+    frame_timeout = 500  # 帧发送超时时间(毫秒)
 
     multiplex_frame_record_dict = {}
     multiplex_frame = [0x180, 0x300, 0x380, 0x140]
     # 判断变更帧
     change_frame = [0x080, 0x400, 0x0C0, 0x1C0, 0x140]
+    # 不处理间隔帧
+    not_interval_dict = [0x0C0, 0x140, 0x0, 0x040]
 
     def __init__(self):
         pass
@@ -66,12 +69,13 @@ class Monitor:
         d[-1] = d[-1] & 0xF0
         return int(binascii.b2a_hex(d), 16)
 
-    @staticmethod
-    def record_frame(frame_id):
-        if frame_id not in CPO.temp_dict:
-            CPO.temp_dict[frame_id] = [0, 0, 0]  # [毫秒数，间隔发送时间， 复用帧的标记ID(非复用帧为0)]
-        if (time.time() - CPO.start_time) > CPO.check_time:
-            CPO.frame_id_dict = CPO.temp_dict.copy()
+    # 记录当前收到的报文ID
+    def record_frame(self, frame_id):
+        if self.get_source_id(frame_id) not in CPO.not_interval_dict:
+            if frame_id not in CPO.temp_dict:
+                CPO.temp_dict[frame_id] = [0, 0, 0]  # [毫秒数，间隔发送时间， 复用帧的标记ID(非复用帧为0)]
+            if (time.time() - CPO.start_time) > CPO.check_time:
+                CPO.frame_id_dict = CPO.temp_dict.copy()
 
     # 智能化处理间隔毫秒数信息
     @staticmethod
@@ -112,7 +116,7 @@ class Monitor:
 
     # 解析can消息
     def analysis_can(self):
-        logger("start can monitor...\r\n", True, CPO.error_log_path)
+        logger("start can monitor...\r\n", True, CPO.catalina_log_path)
 
         can.rc['interface'] = 'socketcan'
         can.rc['channel'] = self.channel
@@ -122,7 +126,7 @@ class Monitor:
             bo = can_bus.recv(timeout=10)
             if bo is None:
                 if not CPO.is_shutdown:
-                    logger("system crash\r\n", True, CPO.error_log_path)
+                    logger("system crash\r\n", True, CPO.catalina_log_path)
                     CPO.is_shutdown = True
             else:
                 frame_id = bo.arbitration_id
@@ -130,7 +134,7 @@ class Monitor:
                 # 判断是否有重启或复位
                 if frame_id == 0x001 or frame_id == 0X0CDA01F1 or frame_id == 0x040:
                     if time.time() - CPO.reset_time > 5:
-                        logger("system restart not active...\r\n", True, CPO.error_log_path)
+                        logger("system restart not active...\r\n", True, CPO.catalina_log_path)
                         CPO.is_reset = True
                         CPO.reset_time = time.time()
                         CPO.is_record_frame = False
@@ -147,7 +151,7 @@ class Monitor:
 
                     self.record_frame(frame_id)
                     if self.record_count == 0:
-                        logger("Initializing frame information, Wait 5 seconds...")
+                        logger('Initializing frame information, Wait 5 seconds...', True, CPO.catalina_log_path)
                         self.record_count = 1
                 else:
                     source_frame_id = self.get_source_id(frame_id)
@@ -163,10 +167,10 @@ class Monitor:
 
                             if CPO.is_reset:
                                 CPO.is_reset = False
-                                logger("system restart successfully\r\n", True, CPO.error_log_path)
+                                logger("system restart successfully\r\n", True, CPO.catalina_log_path)
 
                             # 数据变更和变更范围监控
-                            self.frame_data_change(frame_id, data, frame_dict[2])
+                            # self.frame_data_change(frame_id, data, frame_dict[2])
 
                             # 添加复用帧识别ID
                             if source_frame_id in CPO.multiplex_frame:
@@ -182,7 +186,6 @@ class Monitor:
                             interval = self.handle_interval(round(real_interval))
                             frame_dict[0] = timestamp
                             frame_dict[1] = interval
-
                             # 第一次计算间隔时间不准，过滤掉
                             if interval < 60 * 10000:
                                 key = "%s_%s" % (frame_id, interval)
@@ -198,10 +201,6 @@ class Monitor:
                                                                                                             real_interval,
                                                                                                             d_value)
                                         logger(content, True, CPO.error_log_path)
-
-                                # log_content = "0x%03X %03s      %s" % (frame_id, interval,
-                                #                                        str(binascii.b2a_hex(data))[1:].upper())
-                                # logger(log_content)
 
                                 CPO.interval_dict[key] = [frame_id, interval, self.get_hex_str(data)]
                                 if len(CPO.interval_dict) >= len(CPO.frame_id_dict):

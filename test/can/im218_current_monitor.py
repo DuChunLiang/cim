@@ -16,7 +16,7 @@ import binascii
 #         print('%s - %s' % (now_date, content))
 
 
-def logger(content, is_file=False, path="./logs/error.log"):
+def logger(content, is_file=False, path="./logs/current_error.log"):
     now_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
     log_data = '%s - %s\r\n' % (now_date, content)
     print(log_data)
@@ -44,13 +44,15 @@ class CPO:
     break_time = time.time()
     is_break = False
     op_out = []
+    error_log_path = "./logs/current_error.log"
+    catalina_log_path = "./logs/current_catalina.log"
 
     out_can_dict = {
-        "out1": [b'\x00\x64\x64\x64\x64\x00\x00\x01', "380_13"], "out2": [b'\x04\x64\x64\x64\x64\x00\x00\x00', "380_2"],
-        "out3": [b'\x10\x64\x64\x64\x64\x00\x00\x00', "380_3"], "out4": [b'\x40\x64\x64\x64\x64\x00\x00\x00', "380_4"],
-        "out5": [b'\x00\x64\x64\x64\x64\x01\x00\x00', "380_5"], "out6": [b'\x00\x64\x64\x64\x64\x02\x00\x00', "380_6"],
-        "out7": [b'\x00\x64\x64\x64\x64\x04\x00\x00', "380_7"], "out8": [b'\x00\x64\x64\x64\x64\x08\x00\x00', "380_8"],
-        "out9": [b'\x00\x64\x64\x64\x64\x10\x00\x00', "300_1"], "out10": [b'\x00\x64\x64\x64\x64\x20\x00\x00', "300_2"],
+        "out01": [b'\x00\x64\x64\x64\x64\x00\x00\x01', "380_13"], "out02": [b'\x04\x64\x64\x64\x64\x00\x00\x00', "380_2"],
+        "out03": [b'\x10\x64\x64\x64\x64\x00\x00\x00', "380_3"], "out04": [b'\x40\x64\x64\x64\x64\x00\x00\x00', "380_4"],
+        "out05": [b'\x00\x64\x64\x64\x64\x01\x00\x00', "380_5"], "out06": [b'\x00\x64\x64\x64\x64\x02\x00\x00', "380_6"],
+        "out07": [b'\x00\x64\x64\x64\x64\x04\x00\x00', "380_7"], "out08": [b'\x00\x64\x64\x64\x64\x08\x00\x00', "380_8"],
+        "out09": [b'\x00\x64\x64\x64\x64\x10\x00\x00', "300_1"], "out10": [b'\x00\x64\x64\x64\x64\x20\x00\x00', "300_2"],
         "out11": [b'\x00\x64\x64\x64\x64\x40\x00\x00', "300_3"], "out12": [b'\x00\x64\x64\x64\x64\x80\x00\x00', "300_4"],
         "out13": [b'\x00\x64\x64\x64\x64\x00\x01\x00', "300_5"], "out14": [b'\x00\x64\x64\x64\x64\x00\x02\x00', "300_6"],
         "out15": [b'\x00\x64\x64\x64\x64\x00\x04\x00', "300_7"], "out16": [b'\x00\x64\x64\x64\x64\x00\x08\x00', "300_8"],
@@ -60,9 +62,9 @@ class CPO:
 
     # 10 12
     out_ran_dict = {
-        "out5": b'\x00\x00\x10\x64\x64\x64\x64\x64', "out6": b'\x01\x00\x10\x64\x64\x64\x64\x64',
-        "out7": b'\x02\x00\x10\x64\x64\x64\x64\x64', "out8": b'\x03\x00\x10\x64\x64\x64\x64\x64',
-        "out9": b'\x04\x00\x10\x64\x64\x64\x64\x64', "out10": b'\x05\x00\x10\x64\x64\x64\x64\x64',
+        "out05": b'\x00\x00\x10\x64\x64\x64\x64\x64', "out06": b'\x01\x00\x10\x64\x64\x64\x64\x64',
+        "out07": b'\x02\x00\x10\x64\x64\x64\x64\x64', "out08": b'\x03\x00\x10\x64\x64\x64\x64\x64',
+        "out09": b'\x04\x00\x10\x64\x64\x64\x64\x64', "out10": b'\x05\x00\x10\x64\x64\x64\x64\x64',
         "out11": b'\x06\x00\x10\x64\x64\x64\x64\x64', "out12": b'\x07\x00\x10\x64\x64\x64\x64\x64',
         "out13": b'\x08\x00\x10\x64\x64\x64\x64\x64', "out14": b'\x09\x00\x10\x64\x64\x64\x64\x64',
         "out15": b'\x0A\x00\x10\x64\x64\x64\x64\x64', "out16": b'\x0B\x00\x10\x64\x64\x64\x64\x64',
@@ -88,17 +90,20 @@ class Analysis:
         pass
 
     # 判断id在dbc文件中是否存在
-    def id_is_exist(self, _id):
+    @staticmethod
+    def id_is_exist(_id):
         ret = True if _id in CPO.dbc_id_list else False
         return ret
 
     # 去掉id的地址信息
-    def get_source_id(self, id):
+    @staticmethod
+    def get_source_id(id):
         d = bytearray.fromhex("%04X" % id)
         d[1] = d[1] & 0xF0
         return int(binascii.b2a_hex(d), 16)
 
-    def assembly_data(self, data):
+    @staticmethod
+    def assembly_data(data):
         return [hex(c) for c in data]
 
     # 获取信号的值范围
@@ -109,7 +114,8 @@ class Analysis:
         return tuple([signal.minimum, signal.maximum])
 
     # 根据报文数据检测生成此报文的所有关联ID
-    def create_multiple_id(self, multiple_id, frame_id):
+    @staticmethod
+    def create_multiple_id(multiple_id, frame_id):
         if multiple_id not in CPO.multiple_list:
             CPO.multiple_list.append(multiple_id)
         else:
@@ -342,9 +348,9 @@ class Analysis:
         self.can_bus.send(msg=msg, timeout=10)
         time.sleep(0.001)
 
-    # 判断out1电流是否归零
-    def check_out1(self):
-        logger(content="check out1 zeroing...", is_file=True, path="./logs/catalina.log")
+    # 检查测试环境是否满足
+    def check_env(self):
+        logger(content="check test env...", is_file=True, path=CPO.catalina_log_path)
         record_count = 0
         current_val = 0
         while True:
@@ -353,7 +359,14 @@ class Analysis:
                 if not bo.is_extended_id:
                     frame_id = self.get_source_id(bo.arbitration_id)
                     data = (bo.data + bytearray([0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]))[:8]
-                    if frame_id == 0x380:
+                    # 判断是否有重启或复位
+                    if frame_id == 0x0:
+                        # 启动模块
+                        self.can_send(arbitration_id=0x040, data=b'\x01')
+                        time.sleep(0.5)
+                        self.can_send(arbitration_id=0x040, data=b'\x07')
+                        time.sleep(0.5)
+                    elif frame_id == 0x380:
                         res = self.db.decode_message(frame_id, data)
                         if res is not None:
                             out_ch1_id = "380_%s" % res['out_ch1_id']
@@ -380,22 +393,30 @@ class Analysis:
                                 record_count = 0
                                 current_val = 0
 
+    # 检查电流数据是否正确
+    def check_data(self, out_key, current_val):
+        if int(current_val) < self.cur_scope[0] or int(current_val) > self.cur_scope[1]:
+            content = "error %s %s[%s %s]" % (out_key, current_val, self.cur_scope[0], self.cur_scope[1])
+            logger(content=content, is_file=True)
+        else:
+            content = "success %s %s[%s %s]" % (out_key, current_val, self.cur_scope[0], self.cur_scope[1])
+        logger(content=content, is_file=True, path=CPO.catalina_log_path)
+
     # 发送控制
     def send_control(self):
         while True:
-            self.check_out1()
+            # 检查测试环境
+            self.check_env()
             for out_key in sorted(CPO.out_can_dict):
                 CPO.break_time = time.time()
                 CPO.op_out = [out_key, CPO.out_can_dict[out_key][1]]
                 data = CPO.out_can_dict[out_key][0]
-                key = out_key
                 CPO.is_break = False
                 for i in range(2):
                     self.can_send(arbitration_id=0x0C1, data=data)
-                    if key in CPO.out_ran_dict:
-                        self.can_send(arbitration_id=0x141, data=CPO.out_ran_dict[key])
+                    if out_key in CPO.out_ran_dict:
+                        self.can_send(arbitration_id=0x141, data=CPO.out_ran_dict[out_key])
                     time.sleep(0.1)
-
                 recv_count = 1
                 recv_max_val = 0
                 while True:
@@ -468,7 +489,7 @@ class Analysis:
 
                                         recv_count += 1
                     else:
-                        logger(content="can connect error", is_file=True, path="./logs/catalina.log")
+                        logger(content="can connect error", is_file=True, path=CPO.catalina_log_path)
                         time.sleep(5)
                         break
 
@@ -476,33 +497,15 @@ class Analysis:
                 for i in range(2):
                     self.can_send(arbitration_id=0x0C1, data=CPO.out_close)
                     time.sleep(0.1)
-            logger(content="-----------------------complete------------------------", is_file=True, path="./logs/catalina.log")
+            logger(content="-----------------------complete------------------------", is_file=True, path=CPO.catalina_log_path)
             time.sleep(0.5)
-
-    def check_data(self, out_key, current_val):
-
-        if int(current_val) < self.cur_scope[0] or int(current_val) > self.cur_scope[1]:
-            content = "error %s %s[%s %s]" % (out_key, current_val, self.cur_scope[0], self.cur_scope[1])
-            logger(content=content, is_file=True)
-        else:
-            content = "success %s %s[%s %s]" % (out_key, current_val, self.cur_scope[0], self.cur_scope[1])
-        logger(content=content, is_file=True, path="./logs/catalina.log")
-
-    def send_control_test(self, out):
-        for i in range(2):
-            self.can_send(arbitration_id=0x0C1, data=CPO.out_can_dict[out][0])
-            if out in CPO.out_ran_dict:
-                self.can_send(arbitration_id=0x141, data=CPO.out_ran_dict[out])
-            time.sleep(0.1)
 
 
 if __name__ == "__main__":
     a = Analysis()
     # a.analysis_can()
-
     a.send_control()
 
-    # a.send_control_test(sys.argv[2])
 
 
 
