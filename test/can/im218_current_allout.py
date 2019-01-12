@@ -43,10 +43,16 @@ class CPO:
     test_unit_result = ""
     test_unit_fail = ""
     test_state = 0  # 0-成功 1-失败
+    is_first = True  # 是否是第一次测试
+
+    # out_can_dict = {
+    #     0: b'\x54\x64\x64\x64\x64\xFF\xFF\x01',
+    #     1: b'\x54\x64\x64\x64\x64\xFF\xFF\x02'
+    # }
 
     out_can_dict = {
-        0: b'\x54\x64\x64\x64\x64\xFF\xFF\x01',
-        1: b'\x54\x64\x64\x64\x64\xFF\xFF\x02'
+        0: b'\x00\x64\x64\x64\x64\xFF\x00\x00',
+        1: b'\x00\x64\x64\x64\x64\xFF\x00\x00'
     }
 
     out_ran_dict = {
@@ -175,6 +181,7 @@ class Analysis:
                     data = (bo.data + bytearray([0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]))[:8]
                     # 判断是否有重启或复位
                     if frame_id == 0x0:
+                        CPO.is_first = True
                         # 启动模块
                         self.can_send(arbitration_id=0x040, data=b'\x01')
                         time.sleep(0.5)
@@ -334,7 +341,13 @@ class Analysis:
         #         sum_val += 1
 
         check_time = time.time() - CPO.break_time
-        if check_time > 20:
+        if CPO.is_first:
+            print("---第一次---")
+            compare_time = 10
+        else:
+            compare_time = 1
+
+        if check_time > compare_time:
             result = 1
         return result
 
@@ -374,10 +387,12 @@ class Analysis:
                             if self.get_source_id(bo.arbitration_id) == 0x0:
                                 # 检查测试环境
                                 self.check_env()
+                                CPO.break_time = time.time()
                             else:
                                 data = (bo.data + bytearray([0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]))[:8]
                                 self._get_im218_out(frame_id=bo.arbitration_id, data=data)
                                 if self.check_recv_data():
+                                    CPO.is_first = False
                                     break
                     else:
                         logger(content="can connect error", is_file=True, path=CPO.catalina_log_path)
@@ -398,7 +413,9 @@ class Analysis:
 
                 if CPO.mysql_support:
                     test_unit_name = "IM218-19路输出电流测试"
-                    self.tr.insert_report_detail(report_id, temperature, test_unit_name, CPO.test_unit_result, CPO.test_unit_fail)
+                    if CPO.test_unit_fail is not None and len(CPO.test_unit_fail) < 0:
+                        self.tr.insert_report_detail(report_id, temperature, test_unit_name,
+                                                     CPO.test_unit_result, CPO.test_unit_fail)
                     CPO.test_unit_fail = ""
                     CPO.test_unit_result = ""
 
