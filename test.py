@@ -150,5 +150,9 @@ import subprocess
 import time
 
 # print(time.strptime("2018-01-01", "%Y-%m-%d"))
-PAD = b'\xf1\x9e'
-print(PAD)
+a = bytearray(b'\xf1\x81\x02\x01\x01\x00')
+b = a[4]
+c = a[5]
+a[4] = c
+a[5] = b
+print(a)

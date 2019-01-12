@@ -7,6 +7,7 @@ import time
 import cantools
 import can
 import binascii
+import threading
 
 
 # 日志打印信息
@@ -40,6 +41,8 @@ class CPO:
     complete_package_180 = ""
     complete_package_300 = ""
     complete_package_380 = ""
+    env_is_ok = False
+    can_addr = 0
 
     break_time = time.time()
     is_break = False
@@ -57,7 +60,7 @@ class CPO:
         "out13": [b'\x00\x64\x64\x64\x64\x00\x01\x00', "300_5"], "out14": [b'\x00\x64\x64\x64\x64\x00\x02\x00', "300_6"],
         "out15": [b'\x00\x64\x64\x64\x64\x00\x04\x00', "300_7"], "out16": [b'\x00\x64\x64\x64\x64\x00\x08\x00', "300_8"],
         "out17": [b'\x00\x64\x64\x64\x64\x00\x10\x00', "300_9"], "out18": [b'\x00\x64\x64\x64\x64\x00\x20\x00', "300_10"],
-        "out19": [b'\x00\x64\x64\x64\x64\x00\x00\x02', "380_13"], "out20": [b'\x00\x64\x64\x64\x64\x00\x80\x00', "380_10"],
+        "out19": [b'\x00\x64\x64\x64\x64\x00\x00\x02', "380_13"], "out20": [b'\x00\x64\x64\x64\x64\x00\x80\x00', "380_10"]
     }
 
     # 10 12
@@ -69,7 +72,6 @@ class CPO:
         "out13": b'\x08\x00\x10\x64\x64\x64\x64\x64', "out14": b'\x09\x00\x10\x64\x64\x64\x64\x64',
         "out15": b'\x0A\x00\x10\x64\x64\x64\x64\x64', "out16": b'\x0B\x00\x10\x64\x64\x64\x64\x64',
         "out17": b'\x0C\x00\x10\x64\x64\x64\x64\x64', "out18": b'\x0D\x00\x10\x64\x64\x64\x64\x64'
-        # "out20": b'\xAB\xCD\x1E\x64\x64\x64\x64\x64'
     }
 
     out_close = b'\x00\x00\x00\x00\x00\x00\x00\x00'
@@ -344,9 +346,12 @@ class Analysis:
 
     def can_send(self, arbitration_id=None, data=None):
         # print("send data: ", binascii.b2a_hex(data))
-        msg = can.Message(arbitration_id=arbitration_id, data=data, extended_id=False)
-        self.can_bus.send(msg=msg, timeout=10)
-        time.sleep(0.001)
+        try:
+            msg = can.Message(arbitration_id=arbitration_id, data=data, extended_id=False)
+            self.can_bus.send(msg=msg, timeout=10)
+            time.sleep(0.001)
+        except Exception as e:
+            print("can_send:", e)
 
     # 检查测试环境是否满足
     def check_env(self):
@@ -357,7 +362,11 @@ class Analysis:
             bo = self.can_bus.recv()
             if bo is not None:
                 if not bo.is_extended_id:
+                    CPO.can_addr = bo.arbitration_id & 0xF
+                    if record_count == 0:
+                        self.close_out()
                     frame_id = self.get_source_id(bo.arbitration_id)
+                    # print("----%03X" % bo.arbitration_id)
                     data = (bo.data + bytearray([0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]))[:8]
                     # 判断是否有重启或复位
                     if frame_id == 0x0:
@@ -397,36 +406,57 @@ class Analysis:
     def check_data(self, out_key, current_val):
         if int(current_val) < self.cur_scope[0] or int(current_val) > self.cur_scope[1]:
             content = "error %s %s[%s %s]" % (out_key, current_val, self.cur_scope[0], self.cur_scope[1])
-            logger(content=content, is_file=True)
+            # logger(content=content, is_file=True)
         else:
             content = "success %s %s[%s %s]" % (out_key, current_val, self.cur_scope[0], self.cur_scope[1])
         logger(content=content, is_file=True, path=CPO.catalina_log_path)
 
+    # 循环发送占空比
+    def send_out_duty(self):
+        while True:
+            if CPO.env_is_ok:
+                for duty in CPO.out_ran_dict.items():
+                    can_id = 0x140 + CPO.can_addr
+                    self.can_send(arbitration_id=can_id, data=duty[1])
+                    time.sleep(0.1)
+
+    # 关闭输出
+    def close_out(self):
+        for i in range(2):
+            can_id = 0x0C0 + CPO.can_addr
+            self.can_send(arbitration_id=can_id, data=CPO.out_close)
+            time.sleep(0.1)
+
     # 发送控制
     def send_control(self):
         while True:
+            CPO.env_is_ok = False
             # 检查测试环境
             self.check_env()
+            print("check_env success")
+            CPO.env_is_ok = True
             for out_key in sorted(CPO.out_can_dict):
                 CPO.break_time = time.time()
                 CPO.op_out = [out_key, CPO.out_can_dict[out_key][1]]
                 data = CPO.out_can_dict[out_key][0]
                 CPO.is_break = False
                 for i in range(2):
-                    self.can_send(arbitration_id=0x0C1, data=data)
-                    if out_key in CPO.out_ran_dict:
-                        self.can_send(arbitration_id=0x141, data=CPO.out_ran_dict[out_key])
+                    can_id = 0x0C0 + CPO.can_addr
+                    self.can_send(arbitration_id=can_id, data=data)
                     time.sleep(0.1)
                 recv_count = 1
                 recv_max_val = 0
                 while True:
-                    bo = self.can_bus.recv()
+                    bo = self.can_bus.recv(timeout=5)
                     if bo is not None:
                         if not bo.is_extended_id:
                             frame_id = self.get_source_id(bo.arbitration_id)
                             data = (bo.data + bytearray([0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]))[:8]
-
-                            if frame_id == 0x300:
+                            # 判断是否有重启或复位
+                            if frame_id == 0x0:
+                                # 检查测试环境
+                                self.check_env()
+                            elif frame_id == 0x300:
                                 res = self.db.decode_message(frame_id, data)
                                 if res is not None:
                                     ledi_ch1_current = int(res['ledi_ch1_current'])
@@ -493,10 +523,12 @@ class Analysis:
                         time.sleep(5)
                         break
 
+                # if out_key == "out%s" % sys.argv[2]:
+                # time.sleep(3)
+
                 # 关闭输出
-                for i in range(2):
-                    self.can_send(arbitration_id=0x0C1, data=CPO.out_close)
-                    time.sleep(0.1)
+                self.close_out()
+
             logger(content="-----------------------complete------------------------", is_file=True, path=CPO.catalina_log_path)
             time.sleep(0.5)
 
@@ -504,7 +536,20 @@ class Analysis:
 if __name__ == "__main__":
     a = Analysis()
     # a.analysis_can()
-    a.send_control()
+    # a.send_control()
+
+    thread_name = "threading-out_duty"
+    t_d = threading.Thread(target=a.send_out_duty, name=thread_name)
+    t_d.setDaemon(True)
+
+    thread_name = "threading-send_control"
+    t_s = threading.Thread(target=a.send_control, name=thread_name)
+    t_s.setDaemon(True)
+
+    t_d.start()
+    t_s.start()
+
+    t_s.join()
 
 
 

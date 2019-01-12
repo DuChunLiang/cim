@@ -23,7 +23,7 @@ def logger(content, is_file=False, path="./logs/monitor_log.log"):
 class CPO:
     dbc_id_list = []
     frame_id_dict = {}
-    temp_dict = {0x101: [0, 0, 0], 0x301: [0, 0, 0]}
+    temp_dict = {0x100: [0, 0, 0], 0x300: [0, 0, 0]}
     interval_dict = {}
     last_frame_dict = {}  # 记录上一帧数据用来判断数据变更信息
     start_time = time.time()
@@ -37,14 +37,14 @@ class CPO:
     interval_log_path = "./logs/monitor_interval.log"
     catalina_log_path = "./logs/monitor_catalina.log"
 
-    frame_timeout = 500  # 帧发送超时时间(毫秒)
+    frame_timeout = 50  # 帧发送超时时间(毫秒)
 
     multiplex_frame_record_dict = {}
     multiplex_frame = [0x180, 0x300, 0x380, 0x140]
     # 判断变更帧
     change_frame = [0x080, 0x400, 0x0C0, 0x1C0, 0x140]
-    # 不处理间隔帧
-    not_interval_dict = [0x0C0, 0x140, 0x0, 0x040]
+    # 需要监控间隔时间的报文
+    limit_op_dict = [0x400, 0x080, 0x100, 0x300, 0x380]
 
     def __init__(self):
         pass
@@ -65,13 +65,14 @@ class Monitor:
     # 去掉id的地址信息
     @staticmethod
     def get_source_id(s_id):
-        d = bytearray.fromhex("%08X" % s_id)
-        d[-1] = d[-1] & 0xF0
-        return int(binascii.b2a_hex(d), 16)
+        can_add = s_id & 0xF
+        return s_id - can_add
 
     # 记录当前收到的报文ID
     def record_frame(self, frame_id):
-        if self.get_source_id(frame_id) not in CPO.not_interval_dict:
+        # print("frame_id---%03X" % frame_id)
+        frame_id = self.get_source_id(frame_id)
+        if frame_id in CPO.limit_op_dict:
             if frame_id not in CPO.temp_dict:
                 CPO.temp_dict[frame_id] = [0, 0, 0]  # [毫秒数，间隔发送时间， 复用帧的标记ID(非复用帧为0)]
             if (time.time() - CPO.start_time) > CPO.check_time:
@@ -130,9 +131,10 @@ class Monitor:
                     CPO.is_shutdown = True
             else:
                 frame_id = bo.arbitration_id
+                source_frame_id = self.get_source_id(frame_id)
 
                 # 判断是否有重启或复位
-                if frame_id == 0x001 or frame_id == 0X0CDA01F1 or frame_id == 0x040:
+                if source_frame_id == 0x0:
                     if time.time() - CPO.reset_time > 5:
                         logger("system restart not active...\r\n", True, CPO.catalina_log_path)
                         CPO.is_reset = True
@@ -154,16 +156,16 @@ class Monitor:
                         logger('Initializing frame information, Wait 5 seconds...', True, CPO.catalina_log_path)
                         self.record_count = 1
                 else:
-                    source_frame_id = self.get_source_id(frame_id)
 
+                    # print("CPO.dbc_id_list", CPO.dbc_id_list, source_frame_id)
                     # 判断是否在dbc文件内
                     if source_frame_id in CPO.dbc_id_list:
                         timestamp = bo.timestamp
                         data = (bo.data + bytearray([0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0]))[:8]
 
                         # 判断是否更换了硬件设备 发送不同的报文
-                        if frame_id in CPO.frame_id_dict:
-                            frame_dict = CPO.frame_id_dict[frame_id]
+                        if source_frame_id in CPO.frame_id_dict:
+                            frame_dict = CPO.frame_id_dict[source_frame_id]
 
                             if CPO.is_reset:
                                 CPO.is_reset = False
@@ -186,9 +188,10 @@ class Monitor:
                             interval = self.handle_interval(round(real_interval))
                             frame_dict[0] = timestamp
                             frame_dict[1] = interval
+
                             # 第一次计算间隔时间不准，过滤掉
                             if interval < 60 * 10000:
-                                key = "%s_%s" % (frame_id, interval)
+                                key = "%s_%s" % (source_frame_id, interval)
 
                                 # 获取dbc中此帧规定的发送间隔时间（毫秒）
                                 cycle_time = self.db.get_message_by_frame_id(source_frame_id).cycle_time
@@ -202,7 +205,7 @@ class Monitor:
                                                                                                             d_value)
                                         logger(content, True, CPO.error_log_path)
 
-                                CPO.interval_dict[key] = [frame_id, interval, self.get_hex_str(data)]
+                                CPO.interval_dict[key] = [source_frame_id, interval, self.get_hex_str(data)]
                                 if len(CPO.interval_dict) >= len(CPO.frame_id_dict):
                                     content = ""
                                     for f_key in sorted(CPO.interval_dict):
@@ -217,11 +220,11 @@ class Monitor:
 
                                     if len(CPO.interval_dict) > len(CPO.frame_id_dict):
                                         CPO.interval_dict = {}
-                        else:
-                            # 重新初始化记录的报文ID信息
-                            CPO.frame_id_dict = {}
-                            self.record_count = 0
-                            CPO.interval_dict = {}
+                        # else:
+                        #     # 重新初始化记录的报文ID信息
+                        #     CPO.frame_id_dict = {}
+                        #     self.record_count = 0
+                        #     CPO.interval_dict = {}
                     # self.record_count += 1
 
     # 数据变更和变更范围监控
